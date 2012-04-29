@@ -1,0 +1,14 @@
+## dirac-jdl.vm
+##
+## Variables
+## $jobName, $scriptPath, $scriptName, $cpuTime, $submitPool, $priority
+##
+JobName         = "$jobName";
+Executable      = "$scriptName";
+StdOutput       = "std.out";
+StdError        = "std.err";
+InputSandbox    = {"$scriptPath/$scriptName"};
+OutputSandbox   = {"std.out", "std.err"};
+MaxCPUTime      = "$cpuTime";
+SubmitPools     = {"$submitPool"};
+Priority        = $priority;

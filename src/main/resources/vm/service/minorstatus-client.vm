@@ -1,0 +1,20 @@
+## minorstatus-client.vm
+
+##
+
+# GASW DIRAC Minor Status Service Client 
+echo "from DIRAC.Core.Base import Script" > GASWServiceClient.py
+echo "from DIRAC.Core.DISET.RPCClient import RPCClient" >> GASWServiceClient.py
+echo "from DIRAC.Resources.Computing.ComputingElement import ComputingElement" >> GASWServiceClient.py
+
+echo "import os" >> GASWServiceClient.py
+echo "import sys" >> GASWServiceClient.py
+
+echo "Script.parseCommandLine( )" >> GASWServiceClient.py
+echo "service = RPCClient('WorkloadManagement/GASWService')" >> GASWServiceClient.py
+
+echo "workflowID = str(sys.argv[1])" >> GASWServiceClient.py
+echo "jobID = str(sys.argv[2])" >> GASWServiceClient.py
+echo "minorStatus = str(sys.argv[3]);" >> GASWServiceClient.py
+echo "res = service.echo(workflowID, jobID, minorStatus)" >> GASWServiceClient.py
+echo "print res " >> GASWServiceClient.py
