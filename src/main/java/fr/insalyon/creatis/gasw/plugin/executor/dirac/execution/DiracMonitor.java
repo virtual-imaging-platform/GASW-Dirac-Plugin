@@ -174,6 +174,7 @@ public class DiracMonitor extends GaswMonitor {
                             }
                         }
                     }
+                    ps.close();
                 }
                 Thread.sleep(GaswConfiguration.getInstance().getDefaultSleeptime());
             }
