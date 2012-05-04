@@ -52,6 +52,7 @@ public class DiracConstants {
     public static final String LAB_NOTIFICATION_ENABLED = "plugin.dirac.notification.enabled";
     public static final String LAB_NOTIFICATION_PORT = "plugin.dirac.notification.port";
     // Environment Variables
+    public static final String ENV_MAX_CPU_TIME = "diracMaxCPUTime";
     public static final String ENV_POOL = "diracPool";
     public static final String ENV_PRIORITY = "diracPriority";
 }

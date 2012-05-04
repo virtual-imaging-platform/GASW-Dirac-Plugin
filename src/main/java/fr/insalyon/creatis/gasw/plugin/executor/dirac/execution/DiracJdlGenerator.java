@@ -119,6 +119,9 @@ public class DiracJdlGenerator {
 
                     } else if (variable.getName().equals(DiracConstants.ENV_PRIORITY)) {
                         priority = Integer.parseInt(variable.getValue());
+
+                    } else if (variable.getName().equals(DiracConstants.ENV_MAX_CPU_TIME)) {
+                        cpuTime = Integer.parseInt(variable.getValue());
                     }
                 }
             }
