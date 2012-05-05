@@ -44,6 +44,7 @@ import fr.insalyon.creatis.gasw.release.Infrastructure;
 import fr.insalyon.creatis.gasw.release.Release;
 import fr.insalyon.creatis.gasw.util.VelocityUtil;
 import java.io.File;
+import java.util.List;
 import java.util.Random;
 import org.apache.log4j.Logger;
 
@@ -110,20 +111,30 @@ public class DiracJdlGenerator {
      */
     private void parseEnvironment(Release release) {
 
+        parseVariables(release.getConfigurations());
+
         for (Infrastructure infrastructure : release.getInfrastructures()) {
             if (infrastructure.getType() == Infrastructure.Type.EGEE) {
-                for (EnvVariable variable : infrastructure.getSharedEnvironment()) {
+                parseVariables(infrastructure.getSharedEnvironment());
+            }
+        }
+    }
 
-                    if (variable.getName().equals(DiracConstants.ENV_POOL)) {
-                        submitPool = variable.getValue();
+    /**
+     * 
+     * @param list 
+     */
+    private void parseVariables(List<EnvVariable> list) {
 
-                    } else if (variable.getName().equals(DiracConstants.ENV_PRIORITY)) {
-                        priority = Integer.parseInt(variable.getValue());
+        for (EnvVariable variable : list) {
+            if (variable.getName().equals(DiracConstants.ENV_POOL)) {
+                submitPool = variable.getValue();
 
-                    } else if (variable.getName().equals(DiracConstants.ENV_MAX_CPU_TIME)) {
-                        cpuTime = Integer.parseInt(variable.getValue());
-                    }
-                }
+            } else if (variable.getName().equals(DiracConstants.ENV_PRIORITY)) {
+                priority = Integer.parseInt(variable.getValue());
+
+            } else if (variable.getName().equals(DiracConstants.ENV_MAX_CPU_TIME)) {
+                cpuTime = Integer.parseInt(variable.getValue());
             }
         }
     }
