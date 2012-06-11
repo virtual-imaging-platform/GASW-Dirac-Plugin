@@ -34,14 +34,9 @@
  */
 package fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.hibernate;
 
-import fr.insalyon.creatis.gasw.bean.Job;
 import fr.insalyon.creatis.gasw.dao.DAOException;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.JobPoolDAO;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.util.ArrayList;
 import java.util.List;
 import org.apache.log4j.Logger;
 import org.hibernate.HibernateException;
