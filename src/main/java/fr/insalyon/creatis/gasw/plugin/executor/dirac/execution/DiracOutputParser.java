@@ -64,8 +64,7 @@ public class DiracOutputParser extends GaswOutputParser {
         try {
             GaswExitCode gaswExitCode = GaswExitCode.UNDEFINED;
 
-            if (job.getStatus()
-                    != GaswStatus.CANCELLED
+            if (job.getStatus() != GaswStatus.CANCELLED
                     && job.getStatus() != GaswStatus.STALLED) {
                 try {
                     Process process = GaswUtil.getProcess(logger, userProxy,
