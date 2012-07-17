@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -50,7 +50,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class DiracSubmit extends GaswSubmit {
 
@@ -62,7 +62,7 @@ public class DiracSubmit extends GaswSubmit {
      * @param gaswInput
      * @param userProxy
      */
-    public DiracSubmit(GaswInput gaswInput, Proxy userProxy, 
+    public DiracSubmit(GaswInput gaswInput, Proxy userProxy,
             DiracMinorStatusServiceGenerator minorStatusServiceGenerator) throws GaswException {
 
         super(gaswInput, userProxy, minorStatusServiceGenerator);
@@ -195,6 +195,8 @@ public class DiracSubmit extends GaswSubmit {
 
     public static void terminate() {
 
-        submitPool.terminate();
+        if (submitPool != null) {
+            submitPool.terminate();
+        }
     }
 }

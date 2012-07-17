@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -40,7 +40,7 @@ import fr.insalyon.creatis.gasw.util.VelocityUtil;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class DiracMinorStatusServiceGenerator extends GaswMinorStatusServiceGenerator {
 
@@ -72,6 +72,6 @@ public class DiracMinorStatusServiceGenerator extends GaswMinorStatusServiceGene
     
     @Override
     public String getServiceCall() {
-        return "python ../GASWServiceClient.py";
+        return "${DIRACPYTHON} ../GASWServiceClient.py";
     }
 }
