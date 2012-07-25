@@ -77,7 +77,7 @@ public class JobPool {
         this.fileName = fileName;
     }
 
-    @Column(name = "params")
+    @Column(name = "params", columnDefinition = "LONGTEXT")
     public String getParams() {
         return params;
     }
