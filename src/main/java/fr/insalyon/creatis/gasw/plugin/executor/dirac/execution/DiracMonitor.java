@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -57,7 +57,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class DiracMonitor extends GaswMonitor {
 
@@ -127,19 +127,19 @@ public class DiracMonitor extends GaswMonitor {
 
                             job.setStatus(GaswStatus.RUNNING);
                             job.setDownload(new Date());
-                            jobDAO.update(job);
+                            updateStatus(job);
 
                         } else if (status == DiracStatus.Waiting && job.getStatus() != GaswStatus.QUEUED) {
 
                             job.setStatus(GaswStatus.QUEUED);
                             job.setQueued(new Date());
-                            jobDAO.update(job);
+                            updateStatus(job);
 
                         } else {
 
                             if (jobDAO.getNumberOfCompletedJobsByFileName(job.getFileName()) > 0) {
                                 job.setStatus(GaswStatus.CANCELLED_REPLICA);
-                                jobDAO.update(job);
+                                updateStatus(job);
 
                             } else {
                                 boolean updated = true;
@@ -162,7 +162,7 @@ public class DiracMonitor extends GaswMonitor {
                                 }
 
                                 if (updated) {
-                                    jobDAO.update(job);
+                                    updateStatus(job);
                                     logger.info("Dirac Monitor: job \"" + jobID + "\" finished as \"" + status + "\"");
 
                                     new DiracOutputParser(jobID, monitoredJobs.get(jobID)).start();
@@ -188,13 +188,13 @@ public class DiracMonitor extends GaswMonitor {
             logger.error(ex);
         }
     }
-
+    
     @Override
     public synchronized void add(String jobID, String symbolicName, String fileName,
             String parameters, Proxy userProxy) throws GaswException {
 
         add(new Job(jobID, GaswConfiguration.getInstance().getSimulationID(),
-                GaswStatus.SUCCESSFULLY_SUBMITTED, symbolicName, fileName, 
+                GaswStatus.SUCCESSFULLY_SUBMITTED, symbolicName, fileName,
                 parameters, DiracConstants.EXECUTOR_NAME));
         if (userProxy != null) {
             this.monitoredJobs.put(jobID, userProxy);

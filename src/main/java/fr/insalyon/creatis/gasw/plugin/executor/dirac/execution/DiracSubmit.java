@@ -155,7 +155,7 @@ public class DiracSubmit extends GaswSubmit {
                                         job.getCommand(), job.getFileName(),
                                         job.getParams(), userProxy);
 
-                                DiracDAOFactory.getInstance().getJobPoolDAO().remove(job);
+                                DiracDAOFactory.getInstance().getJobPoolDAO().remove(job);                                
                                 logger.info("Dirac Executor Job ID: " + id + " for " + job.getFileName());
 
                             } catch (Exception ex) {

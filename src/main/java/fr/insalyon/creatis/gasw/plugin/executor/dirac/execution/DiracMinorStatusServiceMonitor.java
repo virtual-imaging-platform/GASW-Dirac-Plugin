@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -41,6 +41,7 @@ import fr.insalyon.creatis.gasw.bean.JobMinorStatus;
 import fr.insalyon.creatis.gasw.dao.DAOException;
 import fr.insalyon.creatis.gasw.dao.DAOFactory;
 import fr.insalyon.creatis.gasw.execution.GaswMinorStatus;
+import fr.insalyon.creatis.gasw.plugin.ListenerPlugin;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -52,7 +53,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class DiracMinorStatusServiceMonitor extends Thread {
 
@@ -99,6 +100,11 @@ public class DiracMinorStatusServiceMonitor extends Thread {
                                 GaswMinorStatus.valueOf(new Integer(message[1])),
                                 new Date());
                         DAOFactory.getDAOFactory().getJobMinorStatusDAO().add(status);
+                        
+                        // Listeners notification
+                        for (ListenerPlugin listener : GaswConfiguration.getInstance().getListenerPlugins()) {
+                            listener.jobMinorStatusReported(status);
+                        }
                     } catch (DAOException ex) {
                         logger.warn(ex);
                     }
