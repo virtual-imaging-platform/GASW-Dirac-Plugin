@@ -134,6 +134,11 @@ public class DiracMonitor extends GaswMonitor {
                             job.setStatus(GaswStatus.QUEUED);
                             job.setQueued(new Date());
                             updateStatus(job);
+                            
+                        } else if (status == DiracStatus.Received && job.getStatus() != GaswStatus.SUCCESSFULLY_SUBMITTED) {
+                            
+                            job.setStatus(GaswStatus.SUCCESSFULLY_SUBMITTED);
+                            updateStatus(job);
 
                         } else {
 
@@ -246,14 +251,12 @@ public class DiracMonitor extends GaswMonitor {
 
             Job job = jobDAO.getJobByID(jobID);
             if (process.exitValue() != 0) {
-                job.setStatus(GaswStatus.QUEUED);
                 logger.error(cout);
             } else {
                 job.setStatus(GaswStatus.SUCCESSFULLY_SUBMITTED);
+                jobDAO.update(job);
                 logger.info("Rescheduled DIRAC Job ID '" + jobID + "'.");
             }
-            jobDAO.update(job);
-
         } catch (DAOException ex) {
             // do nothing
         } catch (IOException ex) {
