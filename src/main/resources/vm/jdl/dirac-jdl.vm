@@ -1,7 +1,8 @@
 ## dirac-jdl.vm
 ##
 ## Variables
-## $jobName, $scriptPath, $scriptName, $cpuTime, $submitPool, $priority
+## $jobName, $scriptPath, $scriptName, $cpuTime, $submitPool, $priority, 
+## $bannedSite,
 ##
 JobName         = "$jobName";
 Executable      = "$scriptName";
@@ -12,3 +13,5 @@ OutputSandbox   = {"std.out", "std.err"};
 MaxCPUTime      = "$cpuTime";
 SubmitPools     = {"$submitPool"};
 Priority        = $priority;
+Site            = "$site";
+BannedSite      = "$bannedSite";

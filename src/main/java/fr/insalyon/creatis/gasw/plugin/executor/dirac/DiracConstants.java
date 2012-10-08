@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -36,7 +36,7 @@ package fr.insalyon.creatis.gasw.plugin.executor.dirac;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class DiracConstants {
 
@@ -52,7 +52,9 @@ public class DiracConstants {
     public static final String LAB_NOTIFICATION_ENABLED = "plugin.dirac.notification.enabled";
     public static final String LAB_NOTIFICATION_PORT = "plugin.dirac.notification.port";
     // Environment Variables
+    public static final String ENV_BANNED_SITE = "diracBannedSite";
     public static final String ENV_MAX_CPU_TIME = "diracMaxCPUTime";
     public static final String ENV_POOL = "diracPool";
     public static final String ENV_PRIORITY = "diracPriority";
+    public static final String ENV_SITE = "diracSite";
 }

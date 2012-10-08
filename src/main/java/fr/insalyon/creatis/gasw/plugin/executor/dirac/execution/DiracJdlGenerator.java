@@ -1,6 +1,6 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
@@ -50,7 +50,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class DiracJdlGenerator {
 
@@ -60,6 +60,8 @@ public class DiracJdlGenerator {
     private String submitPool;
     private int cpuTime;
     private int priority;
+    private String site;
+    private String bannedSite;
 
     public static DiracJdlGenerator getInstance() throws GaswException {
         if (instance == null) {
@@ -78,6 +80,8 @@ public class DiracJdlGenerator {
                 ? GaswConfiguration.getInstance().getDefaultCPUTime() + ((new Random()).nextInt(10) * 900)
                 : GaswConfiguration.getInstance().getDefaultCPUTime();
         this.priority = conf.getDefaultPriority();
+        this.site = "";
+        this.bannedSite = "";
     }
 
     public String generate(String scriptName, Release release) {
@@ -94,6 +98,8 @@ public class DiracJdlGenerator {
             velocity.put("cpuTime", cpuTime);
             velocity.put("submitPool", submitPool);
             velocity.put("priority", priority);
+            velocity.put("site", site);
+            velocity.put("bannedSite", bannedSite);
 
             return velocity.merge().toString();
 
@@ -121,8 +127,8 @@ public class DiracJdlGenerator {
     }
 
     /**
-     * 
-     * @param list 
+     *
+     * @param list
      */
     private void parseVariables(List<EnvVariable> list) {
 
@@ -135,6 +141,12 @@ public class DiracJdlGenerator {
 
             } else if (variable.getName().equals(DiracConstants.ENV_MAX_CPU_TIME)) {
                 cpuTime = Integer.parseInt(variable.getValue());
+
+            } else if (variable.getName().equals(DiracConstants.ENV_SITE)) {
+                site = variable.getValue();
+
+            } else if (variable.getName().equals(DiracConstants.ENV_BANNED_SITE)) {
+                bannedSite = variable.getValue();
             }
         }
     }
