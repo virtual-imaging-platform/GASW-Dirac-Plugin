@@ -4,8 +4,6 @@
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
- * This software is a grid-enabled data-driven workflow manager and editor.
- *
  * This software is governed by the CeCILL  license under French law and
  * abiding by the rules of distribution of free software.  You can  use,
  * modify and/ or redistribute the software under the terms of the CeCILL
@@ -142,41 +140,35 @@ public class DiracMonitor extends GaswMonitor {
                                 job.setStatus(GaswStatus.SUCCESSFULLY_SUBMITTED);
                                 updateStatus(job);
 
-                            } else {
+                            } else if (!isReplica(job)) {
+                                
+                                boolean finished = true;
 
-                                if (jobDAO.getNumberOfCompletedJobsByFileName(job.getFileName()) > 0) {
-                                    job.setStatus(GaswStatus.CANCELLED_REPLICA);
+                                switch (status) {
+                                    case Done:
+                                        job.setStatus(GaswStatus.COMPLETED);
+                                        break;
+                                    case Failed:
+                                        job.setStatus(GaswStatus.ERROR);
+                                        break;
+                                    case Killed:
+                                        job.setStatus(GaswStatus.CANCELLED);
+                                        break;
+                                    case Stalled:
+                                        job.setStatus(GaswStatus.STALLED);
+                                        break;
+                                    default:
+                                        finished = false;
+                                }
+
+                                if (finished) {
                                     updateStatus(job);
+                                    logger.info("Dirac Monitor: job \"" + job.getId() + "\" finished as \"" + status + "\"");
 
-                                } else {
-                                    boolean updated = true;
+                                    new DiracOutputParser(job.getId(), monitoredJobs.get(job.getId())).start();
 
-                                    switch (status) {
-                                        case Done:
-                                            job.setStatus(GaswStatus.COMPLETED);
-                                            break;
-                                        case Failed:
-                                            job.setStatus(GaswStatus.ERROR);
-                                            break;
-                                        case Killed:
-                                            job.setStatus(GaswStatus.CANCELLED);
-                                            break;
-                                        case Stalled:
-                                            job.setStatus(GaswStatus.STALLED);
-                                            break;
-                                        default:
-                                            updated = false;
-                                    }
-
-                                    if (updated) {
-                                        updateStatus(job);
-                                        logger.info("Dirac Monitor: job \"" + job.getId() + "\" finished as \"" + status + "\"");
-
-                                        new DiracOutputParser(job.getId(), monitoredJobs.get(job.getId())).start();
-
-                                        if (job.getStatus() != GaswStatus.CANCELLED) {
-                                            killReplicas(job.getFileName());
-                                        }
+                                    if (job.getStatus() == GaswStatus.COMPLETED) {
+                                        killReplicas(job.getInvocationID());
                                     }
                                 }
                             }
@@ -297,10 +289,10 @@ public class DiracMonitor extends GaswMonitor {
     }
 
     @Override
-    protected void killReplicas(String fileName) {
+    protected void killReplicas(int invocationID) {
 
         try {
-            for (Job job : jobDAO.getActiveJobsByFileName(fileName)) {
+            for (Job job : jobDAO.getActiveJobsByInvocationID(invocationID)) {
                 logger.info("Killing replica: " + job.getId() + " - " + job.getFileName());
                 kill(job.getId());
             }
