@@ -53,6 +53,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -87,10 +88,10 @@ public class DiracMonitor extends GaswMonitor {
 
     @Override
     public void run() {
+        Process process = null;
 
-        try {
-            while (!stop) {
-
+        while (!stop) {
+            try {
                 verifySignaledJobs();
 
                 List<Job> jobsList = jobDAO.getActiveJobs();
@@ -105,7 +106,7 @@ public class DiracMonitor extends GaswMonitor {
                     }
 
                     Proxy userProxy = monitoredJobs.get(jobsList.get(0).getId());
-                    Process process = GaswUtil.getProcess(logger, userProxy,
+                    process = GaswUtil.getProcess(logger, userProxy,
                             command.toArray(new String[]{}));
 
                     BufferedReader br = GaswUtil.getBufferedReader(process);
@@ -141,7 +142,7 @@ public class DiracMonitor extends GaswMonitor {
                                 updateStatus(job);
 
                             } else if (!isReplica(job)) {
-                                
+
                                 boolean finished = true;
 
                                 switch (status) {
@@ -176,27 +177,28 @@ public class DiracMonitor extends GaswMonitor {
                     }
                     br.close();
                     process.waitFor();
-
                     if (process.exitValue() != 0) {
                         logger.error(cout);
                     }
-                    closeProcess(process);
                 }
                 Thread.sleep(GaswConfiguration.getInstance().getDefaultSleeptime());
+            } catch (IOException ex) {
+                logger.error(ex);
+            } catch (ProxyInitializationException ex) {
+                logger.error(ex);
+            } catch (VOMSExtensionException ex) {
+                logger.error(ex);
+            } catch (GaswException ex) {
+                // do nothing
+            } catch (DAOException ex) {
+                // do nothing
+            } catch (InterruptedException ex) {
+                logger.error(ex);
+            } finally {
+                closeProcess(process);
             }
-        } catch (IOException ex) {
-            logger.error(ex);
-        } catch (ProxyInitializationException ex) {
-            logger.error(ex);
-        } catch (VOMSExtensionException ex) {
-            logger.error(ex);
-        } catch (GaswException ex) {
-            // do nothing
-        } catch (DAOException ex) {
-            // do nothing
-        } catch (InterruptedException ex) {
-            logger.error(ex);
         }
+
     }
 
     @Override
@@ -213,9 +215,9 @@ public class DiracMonitor extends GaswMonitor {
 
     @Override
     protected void kill(String jobID) {
-
+        Process process = null;
         try {
-            Process process = GaswUtil.getProcess(logger, "dirac-wms-job-kill", jobID);
+            process = GaswUtil.getProcess(logger, "dirac-wms-job-kill", jobID);
             process.waitFor();
 
             BufferedReader br = GaswUtil.getBufferedReader(process);
@@ -231,20 +233,20 @@ public class DiracMonitor extends GaswMonitor {
             } else {
                 logger.info("Killed DIRAC Job ID '" + jobID + "'");
             }
-            closeProcess(process);
-
         } catch (IOException ex) {
             logger.error(ex);
         } catch (InterruptedException ex) {
             logger.error(ex);
+        } finally {
+            closeProcess(process);
         }
     }
 
     @Override
     protected void reschedule(String jobID) {
-
+        Process process = null;
         try {
-            Process process = GaswUtil.getProcess(logger, "dirac-wms-job-reschedule", jobID);
+            process = GaswUtil.getProcess(logger, "dirac-wms-job-reschedule", jobID);
             process.waitFor();
 
             BufferedReader br = GaswUtil.getBufferedReader(process);
@@ -263,14 +265,14 @@ public class DiracMonitor extends GaswMonitor {
                 jobDAO.update(job);
                 logger.info("Rescheduled DIRAC Job ID '" + jobID + "'.");
             }
-            closeProcess(process);
-
         } catch (DAOException ex) {
             // do nothing
         } catch (IOException ex) {
             logger.error(ex);
         } catch (InterruptedException ex) {
             logger.error(ex);
+        } finally {
+            closeProcess(process);
         }
     }
 
@@ -322,11 +324,16 @@ public class DiracMonitor extends GaswMonitor {
      * @param process
      * @throws IOException
      */
-    private void closeProcess(Process process) throws IOException {
-
-        process.getOutputStream().close();
-        process.getInputStream().close();
-        process.getErrorStream().close();
+    private void closeProcess(Process process) {
+        if (process != null) {
+            try {
+                process.getOutputStream().close();
+                process.getInputStream().close();
+                process.getErrorStream().close();
+            } catch (IOException ex) {
+                logger.error(ex);
+            }
+        }
         process = null;
     }
 }

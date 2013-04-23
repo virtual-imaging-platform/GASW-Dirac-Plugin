@@ -120,6 +120,7 @@ public class DiracSubmit extends GaswSubmit {
         public void run() {
 
             while (!stop) {
+                Process process = null;
                 try {
 
                     List<String> command = new ArrayList<String>();
@@ -132,7 +133,7 @@ public class DiracSubmit extends GaswSubmit {
                             command.add(GaswConstants.JDL_ROOT + "/" + job.getFileName() + ".jdl");
                         }
 
-                        Process process = GaswUtil.getProcess(logger, userProxy,
+                        process = GaswUtil.getProcess(logger, userProxy,
                                 command.toArray(new String[]{}));
 
                         BufferedReader br = GaswUtil.getBufferedReader(process);
@@ -154,7 +155,7 @@ public class DiracSubmit extends GaswSubmit {
                                         job.getParams(), userProxy);
 
                                 DiracDAOFactory.getInstance().getJobPoolDAO().remove(job);                                
-                                logger.info("Dirac Executor Job ID: " + id + " for " + job.getFileName());
+                                logger.info("Dirac Executor Job ID is: " + id + " for " + job.getFileName());
 
                             } catch (Exception ex) {
                                 logger.error("Unable to submit job. DIRAC Error: " + s);
@@ -182,6 +183,8 @@ public class DiracSubmit extends GaswSubmit {
                     logger.error(ex);
                 } catch (GaswException ex) {
                     logger.error(ex);
+                } finally{
+                    closeProcess(process);
                 }
             }
         }
@@ -196,5 +199,24 @@ public class DiracSubmit extends GaswSubmit {
         if (submitPool != null) {
             submitPool.terminate();
         }
+    }
+    
+       /**
+     * Closes a process.
+     *
+     * @param process
+     * @throws IOException
+     */
+    private void closeProcess(Process process) {
+        if(process!=null){
+            try {
+                process.getOutputStream().close();
+                process.getInputStream().close();
+                process.getErrorStream().close();
+            } catch (IOException ex) {
+                logger.error(ex);
+            }
+        }
+        process = null;
     }
 }

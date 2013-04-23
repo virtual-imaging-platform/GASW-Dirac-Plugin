@@ -66,8 +66,9 @@ public class DiracOutputParser extends GaswOutputParser {
 
             if (job.getStatus() != GaswStatus.CANCELLED
                     && job.getStatus() != GaswStatus.STALLED) {
+                Process process = null;
                 try {
-                    Process process = GaswUtil.getProcess(logger, userProxy,
+                    process = GaswUtil.getProcess(logger, userProxy,
                             "dirac-wms-job-get-output", job.getId());
                     process.waitFor();
 
@@ -129,6 +130,8 @@ public class DiracOutputParser extends GaswOutputParser {
                     logger.error(ex.getMessage());
                     saveFiles(ex.getMessage());
                     gaswExitCode = GaswExitCode.ERROR_GET_STD;
+                } finally {
+                    closeProcess(process);
                 }
 
             } else {
@@ -188,5 +191,24 @@ public class DiracOutputParser extends GaswOutputParser {
         stdErr = saveFile(GaswConstants.ERR_EXT, GaswConstants.ERR_ROOT, content);
         appStdOut = saveFile(GaswConstants.OUT_APP_EXT, GaswConstants.OUT_ROOT, content);
         appStdErr = saveFile(GaswConstants.ERR_APP_EXT, GaswConstants.ERR_ROOT, content);
+    }
+    
+     /**
+     * Closes a process.
+     *
+     * @param process
+     * @throws IOException
+     */
+    private void closeProcess(Process process) {
+        if(process!=null){
+            try {
+                process.getOutputStream().close();
+                process.getInputStream().close();
+                process.getErrorStream().close();
+            } catch (IOException ex) {
+                logger.error(ex);
+            }
+        }
+        process = null;
     }
 }
