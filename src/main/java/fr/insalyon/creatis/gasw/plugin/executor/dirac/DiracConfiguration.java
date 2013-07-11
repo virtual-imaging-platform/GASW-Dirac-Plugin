@@ -1,10 +1,8 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
- *
- * This software is a grid-enabled data-driven workflow manager and editor.
  *
  * This software is governed by the CeCILL  license under French law and
  * abiding by the rules of distribution of free software.  You can  use,
@@ -36,13 +34,15 @@ package fr.insalyon.creatis.gasw.plugin.executor.dirac;
 
 import fr.insalyon.creatis.gasw.GaswConfiguration;
 import fr.insalyon.creatis.gasw.GaswException;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 public class DiracConfiguration {
 
@@ -57,6 +57,7 @@ public class DiracConfiguration {
     private boolean notificationEnabled;
     private int notificationPort;
     private boolean balanceEnabled;
+    private List<Object> bannedSites;
 
     public static DiracConfiguration getInstance() throws GaswException {
 
@@ -80,6 +81,7 @@ public class DiracConfiguration {
             notificationEnabled = config.getBoolean(DiracConstants.LAB_NOTIFICATION_ENABLED, false);
             notificationPort = config.getInt(DiracConstants.LAB_NOTIFICATION_PORT, 50009);
             balanceEnabled = config.getBoolean(DiracConstants.LAB_BALANCE_ENABLED, false);
+            bannedSites = config.getList(DiracConstants.LAB_CONF_BANNED_SITES, new ArrayList());
 
             config.setProperty(DiracConstants.LAB_HOST, host);
             config.setProperty(DiracConstants.LAB_DEFAULT_POOL, defaultPool);
@@ -90,6 +92,7 @@ public class DiracConfiguration {
             config.setProperty(DiracConstants.LAB_NOTIFICATION_ENABLED, notificationEnabled);
             config.setProperty(DiracConstants.LAB_NOTIFICATION_PORT, notificationPort);
             config.setProperty(DiracConstants.LAB_BALANCE_ENABLED, balanceEnabled);
+            config.setProperty(DiracConstants.LAB_CONF_BANNED_SITES, bannedSites);
 
             config.save();
 
@@ -132,5 +135,9 @@ public class DiracConfiguration {
 
     public int getNotificationPort() {
         return notificationPort;
+    }
+
+    public String[] getBannedSites() {
+        return bannedSites.toArray(new String[]{});
     }
 }

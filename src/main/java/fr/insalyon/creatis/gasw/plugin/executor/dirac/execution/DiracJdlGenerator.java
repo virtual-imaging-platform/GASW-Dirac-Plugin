@@ -4,8 +4,6 @@
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
- * This software is a grid-enabled data-driven workflow manager and editor.
- *
  * This software is governed by the CeCILL  license under French law and
  * abiding by the rules of distribution of free software.  You can  use,
  * modify and/ or redistribute the software under the terms of the CeCILL
@@ -61,7 +59,7 @@ public class DiracJdlGenerator {
     private int cpuTime;
     private int priority;
     private String site;
-    private String bannedSite;
+    private StringBuilder bannedSite;
 
     public static DiracJdlGenerator getInstance() throws GaswException {
         if (instance == null) {
@@ -81,7 +79,13 @@ public class DiracJdlGenerator {
                 : GaswConfiguration.getInstance().getDefaultCPUTime();
         this.priority = conf.getDefaultPriority();
         this.site = "";
-        this.bannedSite = "";
+        this.bannedSite = new StringBuilder();
+        for (String bSite : DiracConfiguration.getInstance().getBannedSites()) {
+            if (bannedSite.length() > 0) {
+                this.bannedSite.append(",");
+            }
+            this.bannedSite.append(bSite);
+        }
     }
 
     public String generate(String scriptName, Release release) {
@@ -146,7 +150,7 @@ public class DiracJdlGenerator {
                 site = variable.getValue();
 
             } else if (variable.getName().equals(DiracConstants.ENV_BANNED_SITE)) {
-                bannedSite = variable.getValue();
+                bannedSite.append(variable.getValue());
             }
         }
     }

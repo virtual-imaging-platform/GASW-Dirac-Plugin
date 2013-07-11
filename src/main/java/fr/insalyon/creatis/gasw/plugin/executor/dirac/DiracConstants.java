@@ -4,8 +4,6 @@
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
  *
- * This software is a grid-enabled data-driven workflow manager and editor.
- *
  * This software is governed by the CeCILL  license under French law and
  * abiding by the rules of distribution of free software.  You can  use,
  * modify and/ or redistribute the software under the terms of the CeCILL
@@ -51,6 +49,7 @@ public class DiracConstants {
     public static final String LAB_MYSQL_USER = "plugin.dirac.mysql.user";
     public static final String LAB_NOTIFICATION_ENABLED = "plugin.dirac.notification.enabled";
     public static final String LAB_NOTIFICATION_PORT = "plugin.dirac.notification.port";
+    public static final String LAB_CONF_BANNED_SITES = "plugin.dirac.conf.sites.banned";
     // Environment Variables
     public static final String ENV_BANNED_SITE = "diracBannedSite";
     public static final String ENV_MAX_CPU_TIME = "diracMaxCPUTime";
