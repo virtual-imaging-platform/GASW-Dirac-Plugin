@@ -37,9 +37,6 @@ import fr.insalyon.creatis.gasw.dao.DAOException;
 import fr.insalyon.creatis.gasw.execution.GaswSubmit;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.DiracDAOFactory;
-import grool.proxy.Proxy;
-import grool.proxy.ProxyInitializationException;
-import grool.proxy.VOMSExtensionException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -60,10 +57,10 @@ public class DiracSubmit extends GaswSubmit {
      * @param gaswInput
      * @param userProxy
      */
-    public DiracSubmit(GaswInput gaswInput, Proxy userProxy,
+    public DiracSubmit(GaswInput gaswInput,
             DiracMinorStatusServiceGenerator minorStatusServiceGenerator) throws GaswException {
 
-        super(gaswInput, userProxy, minorStatusServiceGenerator);
+        super(gaswInput, minorStatusServiceGenerator);
 
         if (submitPool == null || submitPool.isInterrupted() || !submitPool.isAlive()) {
             submitPool = new SubmitPool();
@@ -85,7 +82,7 @@ public class DiracSubmit extends GaswSubmit {
             }
             DiracDAOFactory.getInstance().getJobPoolDAO().add(new JobPool(
                     jdlName.substring(0, jdlName.lastIndexOf(".")),
-                    gaswInput.getRelease().getSymbolicName(),
+                    gaswInput.getExecutableName(),
                     params.toString()));
 
             return jdlName;
@@ -103,7 +100,7 @@ public class DiracSubmit extends GaswSubmit {
     private String generateJdl(String scriptName) throws GaswException {
 
         DiracJdlGenerator generator = DiracJdlGenerator.getInstance();
-        return publishJdl(scriptName, generator.generate(scriptName, gaswInput.getRelease()));
+        return publishJdl(scriptName, generator.generate(scriptName, gaswInput.getEnvVariables()));
     }
 
     /**
@@ -133,8 +130,7 @@ public class DiracSubmit extends GaswSubmit {
                             command.add(GaswConstants.JDL_ROOT + "/" + job.getFileName() + ".jdl");
                         }
 
-                        process = GaswUtil.getProcess(logger, userProxy,
-                                command.toArray(new String[]{}));
+                        process = GaswUtil.getProcess(logger, command.toArray(new String[]{}));
 
                         BufferedReader br = GaswUtil.getBufferedReader(process);
                         String cout = "";
@@ -152,9 +148,9 @@ public class DiracSubmit extends GaswSubmit {
 
                                 DiracMonitor.getInstance().add(id,
                                         job.getCommand(), job.getFileName(),
-                                        job.getParams(), userProxy);
+                                        job.getParams());
 
-                                DiracDAOFactory.getInstance().getJobPoolDAO().remove(job);                                
+                                DiracDAOFactory.getInstance().getJobPoolDAO().remove(job);
                                 logger.info("Dirac Executor Job ID is: " + id + " for " + job.getFileName());
 
                             } catch (Exception ex) {
@@ -177,13 +173,9 @@ public class DiracSubmit extends GaswSubmit {
                     logger.error(ex);
                 } catch (IOException ex) {
                     logger.error(ex);
-                } catch (ProxyInitializationException ex) {
-                    logger.error(ex);
-                } catch (VOMSExtensionException ex) {
-                    logger.error(ex);
                 } catch (GaswException ex) {
                     logger.error(ex);
-                } finally{
+                } finally {
                     closeProcess(process);
                 }
             }
@@ -200,15 +192,15 @@ public class DiracSubmit extends GaswSubmit {
             submitPool.terminate();
         }
     }
-    
-       /**
+
+    /**
      * Closes a process.
      *
      * @param process
      * @throws IOException
      */
     private void closeProcess(Process process) {
-        if(process!=null){
+        if (process != null) {
             try {
                 process.getOutputStream().close();
                 process.getInputStream().close();

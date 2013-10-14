@@ -1,10 +1,8 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
- *
- * This software is a grid-enabled data-driven workflow manager and editor.
  *
  * This software is governed by the CeCILL  license under French law and
  * abiding by the rules of distribution of free software.  You can  use,
@@ -35,9 +33,11 @@
 package fr.insalyon.creatis.gasw.plugin.executor.dirac.execution;
 
 import fr.insalyon.creatis.gasw.*;
+import fr.insalyon.creatis.gasw.dao.DAOException;
 import fr.insalyon.creatis.gasw.execution.GaswOutputParser;
 import fr.insalyon.creatis.gasw.execution.GaswStatus;
-import grool.proxy.Proxy;
+import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
+import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.DiracDAOFactory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +45,7 @@ import org.apache.log4j.Logger;
 
 /**
  *
- * @author Rafael Silva, Tram Truong Huu
+ * @author Rafael Ferreira da Silva, Tram Truong Huu
  */
 public class DiracOutputParser extends GaswOutputParser {
 
@@ -53,9 +53,9 @@ public class DiracOutputParser extends GaswOutputParser {
     private File stdOut;
     private File stdErr;
 
-    public DiracOutputParser(String jobID, Proxy userProxy) {
+    public DiracOutputParser(String jobID) {
 
-        super(jobID, userProxy);
+        super(jobID);
     }
 
     @Override
@@ -66,73 +66,60 @@ public class DiracOutputParser extends GaswOutputParser {
 
             if (job.getStatus() != GaswStatus.CANCELLED
                     && job.getStatus() != GaswStatus.STALLED) {
-                Process process = null;
-                try {
-                    process = GaswUtil.getProcess(logger, userProxy,
-                            "dirac-wms-job-get-output", job.getId());
-                    process.waitFor();
 
-                    if (process.exitValue() == 0) {
-                        stdOut = getStdFile(GaswConstants.OUT_EXT, GaswConstants.OUT_ROOT);
-                        stdErr = getStdFile(GaswConstants.ERR_EXT, GaswConstants.ERR_ROOT);
+                Process process = GaswUtil.getProcess(logger, "dirac-wms-job-get-output", job.getId());
+                process.waitFor();
 
-                        new File("./" + job.getId()).delete();
+                if (process.exitValue() == 0) {
+                    stdOut = getStdFile(GaswConstants.OUT_EXT, GaswConstants.OUT_ROOT);
+                    stdErr = getStdFile(GaswConstants.ERR_EXT, GaswConstants.ERR_ROOT);
 
-                        int exitCode = parseStdOut(stdOut);
-                        exitCode = parseStdErr(stdErr, exitCode);
+                    new File("./" + job.getId()).delete();
 
-                        switch (exitCode) {
-                            case 0:
-                                gaswExitCode = GaswExitCode.SUCCESS;
-                                break;
-                            case 1:
-                                gaswExitCode = GaswExitCode.ERROR_READ_GRID;
-                                break;
-                            case 2:
-                                gaswExitCode = GaswExitCode.ERROR_WRITE_GRID;
-                                break;
-                            case 3:
-                                gaswExitCode = GaswExitCode.ERROR_FILE_NOT_FOUND;
-                                break;
-                            case 6:
-                                gaswExitCode = GaswExitCode.EXECUTION_FAILED;
-                                break;
-                            case 7:
-                                gaswExitCode = GaswExitCode.ERROR_WRITE_LOCAL;
-                                break;
-                        }
-                    } else {
+                    int exitCode = parseStdOut(stdOut);
+                    exitCode = parseStdErr(stdErr, exitCode);
 
-                        BufferedReader br = GaswUtil.getBufferedReader(process);
-                        String cout = "";
-                        String s = null;
-                        while ((s = br.readLine()) != null) {
-                            cout += s;
-                        }
-                        br.close();
-
-                        logger.error(cout);
-                        String message = "Output files do not exist.";
-                        logger.error(message + " Job ID: " + job.getId());
-
-                        parseNonStdOut(GaswExitCode.ERROR_GET_STD.getExitCode());
-
-                        saveFiles(message);
-                        gaswExitCode = GaswExitCode.ERROR_GET_STD;
+                    switch (exitCode) {
+                        case 0:
+                            gaswExitCode = GaswExitCode.SUCCESS;
+                            break;
+                        case 1:
+                            gaswExitCode = GaswExitCode.ERROR_READ_GRID;
+                            break;
+                        case 2:
+                            gaswExitCode = GaswExitCode.ERROR_WRITE_GRID;
+                            break;
+                        case 3:
+                            gaswExitCode = GaswExitCode.ERROR_FILE_NOT_FOUND;
+                            break;
+                        case 6:
+                            gaswExitCode = GaswExitCode.EXECUTION_FAILED;
+                            break;
+                        case 7:
+                            gaswExitCode = GaswExitCode.ERROR_WRITE_LOCAL;
+                            break;
                     }
-                } catch (grool.proxy.ProxyInitializationException ex) {
+                } else {
 
-                    logger.error(ex.getMessage());
-                    saveFiles(ex.getMessage());
-                    gaswExitCode = GaswExitCode.ERROR_GET_STD;
+                    BufferedReader br = GaswUtil.getBufferedReader(process);
+                    String cout = "";
+                    String s = null;
+                    while ((s = br.readLine()) != null) {
+                        cout += s;
+                    }
+                    br.close();
 
-                } catch (grool.proxy.VOMSExtensionException ex) {
-                    logger.error(ex.getMessage());
-                    saveFiles(ex.getMessage());
+                    logger.error(cout);
+                    String message = "Output files do not exist.";
+                    logger.error(message + " Job ID: " + job.getId());
+
+                    parseNonStdOut(GaswExitCode.ERROR_GET_STD.getExitCode());
+
+                    saveFiles(message);
                     gaswExitCode = GaswExitCode.ERROR_GET_STD;
-                } finally {
-                    closeProcess(process);
                 }
+
+                closeProcess(process);
 
             } else {
 
@@ -192,15 +179,15 @@ public class DiracOutputParser extends GaswOutputParser {
         appStdOut = saveFile(GaswConstants.OUT_APP_EXT, GaswConstants.OUT_ROOT, content);
         appStdErr = saveFile(GaswConstants.ERR_APP_EXT, GaswConstants.ERR_ROOT, content);
     }
-    
-     /**
+
+    /**
      * Closes a process.
      *
      * @param process
      * @throws IOException
      */
     private void closeProcess(Process process) {
-        if(process!=null){
+        if (process != null) {
             try {
                 process.getOutputStream().close();
                 process.getInputStream().close();
@@ -210,5 +197,17 @@ public class DiracOutputParser extends GaswOutputParser {
             }
         }
         process = null;
+    }
+
+    @Override
+    protected void resubmit() throws GaswException {
+        try {
+            DiracDAOFactory.getInstance().getJobPoolDAO().add(
+                    new JobPool(job.getFileName(), job.getCommand(), job.getParameters()));
+            
+        } catch (DAOException ex) {
+            throw new GaswException(ex);
+        }
+
     }
 }

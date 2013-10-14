@@ -43,17 +43,11 @@ import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConstants;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.DiracDAOFactory;
-import grool.proxy.Proxy;
-import grool.proxy.ProxyInitializationException;
-import grool.proxy.VOMSExtensionException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.logging.Level;
 import org.apache.log4j.Logger;
 
 /**
@@ -65,7 +59,6 @@ public class DiracMonitor extends GaswMonitor {
     private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
     private static DiracMonitor instance;
     private boolean stop;
-    private volatile Map<String, Proxy> monitoredJobs;
 
     public synchronized static DiracMonitor getInstance() throws GaswException {
 
@@ -80,7 +73,6 @@ public class DiracMonitor extends GaswMonitor {
 
         super();
         stop = false;
-        this.monitoredJobs = new HashMap<String, Proxy>();
         if (GaswConfiguration.getInstance().isMinorStatusEnabled()) {
             DiracMinorStatusServiceMonitor.getInstance();
         }
@@ -105,9 +97,7 @@ public class DiracMonitor extends GaswMonitor {
                         command.add(job.getId());
                     }
 
-                    Proxy userProxy = monitoredJobs.get(jobsList.get(0).getId());
-                    process = GaswUtil.getProcess(logger, userProxy,
-                            command.toArray(new String[]{}));
+                    process = GaswUtil.getProcess(logger, command.toArray(new String[]{}));
 
                     BufferedReader br = GaswUtil.getBufferedReader(process);
 
@@ -163,13 +153,16 @@ public class DiracMonitor extends GaswMonitor {
                                 }
 
                                 if (finished) {
+                                    if (job.getDownload() == null) {
+                                        job.setDownload(job.getQueued());
+                                    }
                                     updateStatus(job);
                                     logger.info("Dirac Monitor: job \"" + job.getId() + "\" finished as \"" + status + "\"");
 
-                                    new DiracOutputParser(job.getId(), monitoredJobs.get(job.getId())).start();
+                                    new DiracOutputParser(job.getId()).start();
 
                                     if (job.getStatus() == GaswStatus.COMPLETED) {
-                                        killReplicas(job.getInvocationID());
+                                        killReplicas(job);
                                     }
                                 }
                             }
@@ -180,13 +173,10 @@ public class DiracMonitor extends GaswMonitor {
                     if (process.exitValue() != 0) {
                         logger.error(cout);
                     }
+                    closeProcess(process);
                 }
                 Thread.sleep(GaswConfiguration.getInstance().getDefaultSleeptime());
             } catch (IOException ex) {
-                logger.error(ex);
-            } catch (ProxyInitializationException ex) {
-                logger.error(ex);
-            } catch (VOMSExtensionException ex) {
                 logger.error(ex);
             } catch (GaswException ex) {
                 // do nothing
@@ -203,21 +193,19 @@ public class DiracMonitor extends GaswMonitor {
 
     @Override
     public synchronized void add(String jobID, String symbolicName, String fileName,
-            String parameters, Proxy userProxy) throws GaswException {
+            String parameters) throws GaswException {
 
         add(new Job(jobID, GaswConfiguration.getInstance().getSimulationID(),
                 GaswStatus.SUCCESSFULLY_SUBMITTED, symbolicName, fileName,
                 parameters, DiracConstants.EXECUTOR_NAME));
-        if (userProxy != null) {
-            this.monitoredJobs.put(jobID, userProxy);
-        }
     }
 
     @Override
-    protected void kill(String jobID) {
+    protected void kill(Job job) {
+
         Process process = null;
         try {
-            process = GaswUtil.getProcess(logger, "dirac-wms-job-kill", jobID);
+            process = GaswUtil.getProcess(logger, "dirac-wms-job-kill", job.getId());
             process.waitFor();
 
             BufferedReader br = GaswUtil.getBufferedReader(process);
@@ -231,8 +219,23 @@ public class DiracMonitor extends GaswMonitor {
             if (process.exitValue() != 0) {
                 logger.error(cout);
             } else {
-                logger.info("Killed DIRAC Job ID '" + jobID + "'");
+                logger.info("Killed DIRAC Job ID '" + job.getId() + "'");
+                if (jobDAO.getNumberOfCompletedJobsByInvocationID(job.getInvocationID()) > 0
+                        || jobDAO.getActiveJobsByInvocationID(job.getInvocationID()).size() > 1) {
+                    job.setStatus(GaswStatus.CANCELLED_REPLICA);
+                    updateStatus(job);
+
+                } else {
+                    job.setStatus(GaswStatus.CANCELLED);
+                    updateStatus(job);
+                    logger.info("Dirac Monitor: job \"" + job.getId() + "\" finished as \"" + job.getStatus() + "\"");
+                    new DiracOutputParser(job.getId()).start();
+                }
             }
+        } catch (DAOException ex) {
+            // do nothing
+        } catch (GaswException ex) {
+            logger.error(ex);
         } catch (IOException ex) {
             logger.error(ex);
         } catch (InterruptedException ex) {
@@ -243,10 +246,11 @@ public class DiracMonitor extends GaswMonitor {
     }
 
     @Override
-    protected void reschedule(String jobID) {
+    protected void reschedule(Job job) {
+
         Process process = null;
         try {
-            process = GaswUtil.getProcess(logger, "dirac-wms-job-reschedule", jobID);
+            process = GaswUtil.getProcess(logger, "dirac-wms-job-reschedule", job.getId());
             process.waitFor();
 
             BufferedReader br = GaswUtil.getBufferedReader(process);
@@ -257,13 +261,12 @@ public class DiracMonitor extends GaswMonitor {
             }
             br.close();
 
-            Job job = jobDAO.getJobByID(jobID);
             if (process.exitValue() != 0) {
                 logger.error(cout);
             } else {
                 job.setStatus(GaswStatus.SUCCESSFULLY_SUBMITTED);
                 jobDAO.update(job);
-                logger.info("Rescheduled DIRAC Job ID '" + jobID + "'.");
+                logger.info("Rescheduled DIRAC Job ID '" + job.getId() + "'.");
             }
         } catch (DAOException ex) {
             // do nothing
@@ -277,10 +280,9 @@ public class DiracMonitor extends GaswMonitor {
     }
 
     @Override
-    protected void replicate(String jobID) {
+    protected void replicate(Job job) {
 
         try {
-            Job job = jobDAO.getJobByID(jobID);
             logger.info("Replicating: " + job.getId() + " - " + job.getFileName());
             DiracDAOFactory.getInstance().getJobPoolDAO().add(
                     new JobPool(job.getFileName(), job.getCommand(), job.getParameters()));
@@ -291,13 +293,26 @@ public class DiracMonitor extends GaswMonitor {
     }
 
     @Override
-    protected void killReplicas(int invocationID) {
+    protected void killReplicas(Job job) {
 
         try {
-            for (Job job : jobDAO.getActiveJobsByInvocationID(invocationID)) {
-                logger.info("Killing replica: " + job.getId() + " - " + job.getFileName());
-                kill(job.getId());
+            for (Job j : jobDAO.getActiveJobsByInvocationID(job.getInvocationID())) {
+                logger.info("Killing replica: " + j.getId() + " - " + j.getFileName());
+                kill(j);
             }
+
+        } catch (DAOException ex) {
+            // do nothing
+        }
+    }
+
+    @Override
+    protected void resume(Job job) {
+
+        try {
+            logger.info("Resuming: " + job.getId() + " - " + job.getFileName());
+            DiracDAOFactory.getInstance().getJobPoolDAO().add(
+                    new JobPool(job.getFileName(), job.getCommand(), job.getParameters()));
 
         } catch (DAOException ex) {
             // do nothing

@@ -1,10 +1,8 @@
 /* Copyright CNRS-CREATIS
  *
- * Rafael Silva
+ * Rafael Ferreira da Silva
  * rafael.silva@creatis.insa-lyon.fr
  * http://www.rafaelsilva.com
- *
- * This software is a grid-enabled data-driven workflow manager and editor.
  *
  * This software is governed by the CeCILL  license under French law and
  * abiding by the rules of distribution of free software.  You can  use,
@@ -41,14 +39,13 @@ import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracMinorStatusServiceGenerator;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracMonitor;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracSubmit;
-import grool.proxy.Proxy;
 import java.util.ArrayList;
 import java.util.List;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 
 /**
  *
- * @author Rafael Silva
+ * @author Rafael Ferreira da Silva
  */
 @PluginImplementation
 public class DiracExecutor implements ExecutorPlugin {
@@ -61,10 +58,10 @@ public class DiracExecutor implements ExecutorPlugin {
     }
 
     @Override
-    public void load(GaswInput gaswInput, Proxy userProxy) throws GaswException {
+    public void load(GaswInput gaswInput) throws GaswException {
 
         DiracConfiguration.getInstance();
-        diracSubmit = new DiracSubmit(gaswInput, userProxy, 
+        diracSubmit = new DiracSubmit(gaswInput,  
                 DiracMinorStatusServiceGenerator.getInstance());
     }
 

@@ -37,12 +37,9 @@ import fr.insalyon.creatis.gasw.GaswConstants;
 import fr.insalyon.creatis.gasw.GaswException;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConstants;
-import fr.insalyon.creatis.gasw.release.EnvVariable;
-import fr.insalyon.creatis.gasw.release.Infrastructure;
-import fr.insalyon.creatis.gasw.release.Release;
 import fr.insalyon.creatis.gasw.util.VelocityUtil;
 import java.io.File;
-import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import org.apache.log4j.Logger;
 
@@ -59,7 +56,7 @@ public class DiracJdlGenerator {
     private int cpuTime;
     private int priority;
     private String site;
-    private StringBuilder bannedSite;
+    private StringBuilder bannedSites;
 
     public static DiracJdlGenerator getInstance() throws GaswException {
         if (instance == null) {
@@ -79,19 +76,19 @@ public class DiracJdlGenerator {
                 : GaswConfiguration.getInstance().getDefaultCPUTime();
         this.priority = conf.getDefaultPriority();
         this.site = "";
-        this.bannedSite = new StringBuilder();
+        this.bannedSites = new StringBuilder();
         for (String bSite : DiracConfiguration.getInstance().getBannedSites()) {
-            if (bannedSite.length() > 0) {
-                this.bannedSite.append(",");
+            if (bannedSites.length() > 0) {
+                this.bannedSites.append(",");
             }
-            this.bannedSite.append(bSite);
+            this.bannedSites.append(bSite);
         }
     }
 
-    public String generate(String scriptName, Release release) {
+    public String generate(String scriptName, Map<String, String> envVariables) {
 
         try {
-            parseEnvironment(release);
+            parseEnvironment(envVariables);
             String jobName = scriptName.split("\\.")[0] + " - " + GaswConfiguration.getInstance().getSimulationID();
 
             VelocityUtil velocity = new VelocityUtil("vm/jdl/dirac-jdl.vm");
@@ -103,7 +100,7 @@ public class DiracJdlGenerator {
             velocity.put("submitPool", submitPool);
             velocity.put("priority", priority);
             velocity.put("site", site);
-            velocity.put("bannedSite", bannedSite);
+            velocity.put("bannedSite", bannedSites);
 
             return velocity.merge().toString();
 
@@ -119,39 +116,26 @@ public class DiracJdlGenerator {
      * @param gaswInput
      * @return
      */
-    private void parseEnvironment(Release release) {
+    private void parseEnvironment(Map<String, String> envVariables) {
 
-        parseVariables(release.getConfigurations());
-
-        for (Infrastructure infrastructure : release.getInfrastructures()) {
-            if (infrastructure.getType() == Infrastructure.Type.EGEE) {
-                parseVariables(infrastructure.getSharedEnvironment());
-            }
+        if (envVariables.containsKey(DiracConstants.ENV_POOL)) {
+            submitPool = envVariables.get(DiracConstants.ENV_POOL);
         }
-    }
 
-    /**
-     *
-     * @param list
-     */
-    private void parseVariables(List<EnvVariable> list) {
+        if (envVariables.containsKey(DiracConstants.ENV_PRIORITY)) {
+            priority = Integer.parseInt(envVariables.get(DiracConstants.ENV_PRIORITY));
+        }
 
-        for (EnvVariable variable : list) {
-            if (variable.getName().equals(DiracConstants.ENV_POOL)) {
-                submitPool = variable.getValue();
+        if (envVariables.containsKey(DiracConstants.ENV_MAX_CPU_TIME)) {
+            cpuTime = Integer.parseInt(envVariables.get(DiracConstants.ENV_MAX_CPU_TIME));
+        }
 
-            } else if (variable.getName().equals(DiracConstants.ENV_PRIORITY)) {
-                priority = Integer.parseInt(variable.getValue());
+        if (envVariables.containsKey(DiracConstants.ENV_SITE)) {
+            site = envVariables.get(DiracConstants.ENV_SITE);
+        }
 
-            } else if (variable.getName().equals(DiracConstants.ENV_MAX_CPU_TIME)) {
-                cpuTime = Integer.parseInt(variable.getValue());
-
-            } else if (variable.getName().equals(DiracConstants.ENV_SITE)) {
-                site = variable.getValue();
-
-            } else if (variable.getName().equals(DiracConstants.ENV_BANNED_SITE)) {
-                bannedSite.append(variable.getValue());
-            }
+        if (envVariables.containsKey(DiracConstants.ENV_BANNED_SITE)) {
+            bannedSites.append(envVariables.get(DiracConstants.ENV_BANNED_SITE));
         }
     }
 }
