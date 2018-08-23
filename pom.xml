@@ -9,6 +9,10 @@
 
     <name>GASW-Dirac-Plugin</name>
 
+    <properties>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
     <licenses>
         <license>
             <name>CeCILL-B, Version 1.0</name>
