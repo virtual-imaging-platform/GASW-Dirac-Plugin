@@ -1,8 +1,8 @@
 ## dirac-jdl.vm
 ##
 ## Variables
-## $jobName, $scriptPath, $scriptName, $cpuTime, $submitPool, $priority, 
-## $bannedSite,
+## $jobName, $scriptPath, $scriptName, $cpuTime, $submitPool,
+## $priority, $site $bannedSite, $tags
 ##
 JobName         = "$jobName";
 Executable      = "$scriptName";
@@ -15,3 +15,6 @@ SubmitPools     = {"$submitPool"};
 Priority        = $priority;
 Site            = "$site";
 BannedSite      = "$bannedSite";
+#if ($tags != null && $tags.length() > 0)
+Tags            = "$tags";
+#end
