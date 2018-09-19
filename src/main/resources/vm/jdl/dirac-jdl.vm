@@ -15,6 +15,8 @@ SubmitPools     = {"$submitPool"};
 Priority        = $priority;
 Site            = "$site";
 BannedSite      = "$bannedSite";
-#if ($tags != null && $tags.length() > 0)
+## Following line checks that $tags is not null and not empty.
+## See https://wiki.apache.org/velocity/CheckingForNull
+#if ("$!tags" != "")
 Tags            = "$tags";
 #end
