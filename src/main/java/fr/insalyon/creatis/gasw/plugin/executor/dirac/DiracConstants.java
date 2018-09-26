@@ -56,4 +56,5 @@ public class DiracConstants {
     public static final String ENV_POOL = "diracPool";
     public static final String ENV_PRIORITY = "diracPriority";
     public static final String ENV_SITE = "diracSite";
+    public static final String ENV_TAGS = "diracTag";
 }

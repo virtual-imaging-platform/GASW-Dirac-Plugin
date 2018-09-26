@@ -57,6 +57,7 @@ public class DiracJdlGenerator {
     private int priority;
     private String site;
     private StringBuilder bannedSites;
+    private String tags;
 
     public static DiracJdlGenerator getInstance() throws GaswException {
         if (instance == null) {
@@ -83,6 +84,7 @@ public class DiracJdlGenerator {
             }
             this.bannedSites.append(bSite);
         }
+        this.tags = "";
     }
 
     public String generate(String scriptName, Map<String, String> envVariables) {
@@ -101,6 +103,7 @@ public class DiracJdlGenerator {
             velocity.put("priority", priority);
             velocity.put("site", site);
             velocity.put("bannedSite", bannedSites);
+            velocity.put("tags", tags);
 
             return velocity.merge().toString();
 
@@ -137,5 +140,7 @@ public class DiracJdlGenerator {
         if (envVariables.containsKey(DiracConstants.ENV_BANNED_SITE)) {
             bannedSites.append(envVariables.get(DiracConstants.ENV_BANNED_SITE));
         }
+
+        tags = envVariables.getOrDefault(DiracConstants.ENV_TAGS, tags);
     }
 }

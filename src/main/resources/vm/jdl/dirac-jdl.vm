@@ -1,8 +1,8 @@
 ## dirac-jdl.vm
 ##
 ## Variables
-## $jobName, $scriptPath, $scriptName, $cpuTime, $submitPool, $priority, 
-## $bannedSite,
+## $jobName, $scriptPath, $scriptName, $cpuTime, $submitPool,
+## $priority, $site $bannedSite, $tags
 ##
 JobName         = "$jobName";
 Executable      = "$scriptName";
@@ -15,3 +15,8 @@ SubmitPools     = {"$submitPool"};
 Priority        = $priority;
 Site            = "$site";
 BannedSite      = "$bannedSite";
+## Following line checks that $tags is not null and not empty.
+## See https://wiki.apache.org/velocity/CheckingForNull
+#if ("$!tags" != "")
+Tags            = "$tags";
+#end

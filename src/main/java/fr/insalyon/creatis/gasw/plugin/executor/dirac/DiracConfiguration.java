@@ -67,6 +67,55 @@ public class DiracConfiguration {
         return instance;
     }
 
+    public static void setConfiguration(
+        String host,
+        String defaultPool,
+        int defaultPriority,
+        String mysqlHost,
+        int mysqlPort,
+        String mysqlUser,
+        boolean notificationEnabled,
+        int notificationPort,
+        boolean balanceEnabled,
+        List<Object> bannedSites) {
+
+        instance = new DiracConfiguration(
+            host,
+            defaultPool,
+            defaultPriority,
+            mysqlHost,
+            mysqlPort,
+            mysqlUser,
+            notificationEnabled,
+            notificationPort,
+            balanceEnabled,
+            bannedSites);
+    }
+
+    private DiracConfiguration(
+        String host,
+        String defaultPool,
+        int defaultPriority,
+        String mysqlHost,
+        int mysqlPort,
+        String mysqlUser,
+        boolean notificationEnabled,
+        int notificationPort,
+        boolean balanceEnabled,
+        List<Object> bannedSites) {
+
+        this.host = host;
+        this.defaultPool = defaultPool;
+        this.defaultPriority = defaultPriority;
+        this.mysqlHost = mysqlHost;
+        this.mysqlPort = mysqlPort;
+        this.mysqlUser = mysqlUser;
+        this.notificationEnabled = notificationEnabled;
+        this.notificationPort = notificationPort;
+        this.balanceEnabled = balanceEnabled;
+        this.bannedSites = bannedSites;
+    }
+
     private DiracConfiguration() throws GaswException {
 
         try {
