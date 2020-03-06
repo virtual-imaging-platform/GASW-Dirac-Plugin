@@ -117,7 +117,11 @@ public class DiracMonitor extends GaswMonitor {
                             if (status == DiracStatus.Running && job.getStatus() != GaswStatus.RUNNING) {
 
                                 job.setStatus(GaswStatus.RUNNING);
-                                job.setDownload(new Date());
+                                // in case of job just replicated (so in SUCCESSFULLY_SUBMITTED
+                                // status), do not erase original (and real) download date
+                                if (job.getDownload() == null) {
+                                    job.setDownload(new Date());
+                                }
                                 updateStatus(job);
 
                             } else if (status == DiracStatus.Waiting && job.getStatus() != GaswStatus.QUEUED) {
@@ -164,6 +168,9 @@ public class DiracMonitor extends GaswMonitor {
                                     if (job.getStatus() == GaswStatus.COMPLETED) {
                                         killReplicas(job);
                                     }
+                                } else if (job.getStatus() == GaswStatus.REPLICATE) {
+                                    logger.error("Dirac Monitor: job \"" + job.getId() + "\"" +
+                                            "should not have REPLICATED status after a monitor run");
                                 }
                             }
                         }
@@ -286,9 +293,18 @@ public class DiracMonitor extends GaswMonitor {
             logger.info("Replicating: " + job.getId() + " - " + job.getFileName());
             DiracDAOFactory.getInstance().getJobPoolDAO().add(
                     new JobPool(job.getFileName(), job.getCommand(), job.getParameters()));
+            // we change the status of a job that has just been replicated to
+            // avoid it being replicated another time at the next loop
+            // we use the SUCCESSFULLY_SUBMITTED status as at will permit
+            // the next run loop to update its status to its real one
+            //
+            // waiting for VIP to support a new REPLICATED status, then we will
+            // be able to use it to avoid this hack
+            job.setStatus(GaswStatus.SUCCESSFULLY_SUBMITTED);
+            jobDAO.update(job);
 
         } catch (DAOException ex) {
-            // do nothing
+            logger.error("[DIRAC] error replicating job " + job.getId(), ex);
         }
     }
 
