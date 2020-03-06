@@ -104,6 +104,8 @@ public class DiracMonitor extends GaswMonitor {
                     StringBuilder cout = new StringBuilder();
                     String s = null;
 
+                    List<String> jobIdsReturnedByDirac = new ArrayList<>();
+
                     while ((s = br.readLine()) != null) {
 
                         if (s.contains("JobID=")) {
@@ -111,8 +113,13 @@ public class DiracMonitor extends GaswMonitor {
                             String[] res = s.split(" ");
                             cout.append(s).append("\n");
 
-                            Job job = jobDAO.getJobByID(res[0].replace("JobID=", ""));
+                            String jobIdReturnedByDirac = res[0].replace("JobID=", "");
+                            Job job = jobDAO.getJobByID(jobIdReturnedByDirac);
                             DiracStatus status = DiracStatus.valueOf(res[1].replace("Status=", "").replace(";", ""));
+
+                            jobIdsReturnedByDirac.add(jobIdReturnedByDirac);
+                            // update the status in case of change, or in case of job that has just been replicated
+                            // (then it has the SUCCESSFULLY_SUBMITTED status)
 
                             if (status == DiracStatus.Running && job.getStatus() != GaswStatus.RUNNING) {
 
@@ -152,6 +159,8 @@ public class DiracMonitor extends GaswMonitor {
                                     case Stalled:
                                         job.setStatus(GaswStatus.STALLED);
                                         break;
+                                    case Completed:
+                                        logger.info("Dirac Monitor: job \"" + job.getId() + "\" has status \"" + status + "\"");
                                     default:
                                         finished = false;
                                 }
@@ -181,21 +190,37 @@ public class DiracMonitor extends GaswMonitor {
                         logger.error(cout);
                     }
                     closeProcess(process);
+                    checkMissingDiracJob(command.subList(1, command.size()), jobIdsReturnedByDirac);
                 }
                 Thread.sleep(GaswConfiguration.getInstance().getDefaultSleeptime());
-            } catch (IOException ex) {
-                logger.error(ex);
-            } catch (GaswException ex) {
-                // do nothing
-            } catch (DAOException ex) {
-                // do nothing
+            } catch (IOException | GaswException | DAOException ex) {
+                logger.error("[DIRAC] error monitoring DIRAC jobs", ex);
             } catch (InterruptedException ex) {
-                logger.error(ex);
+                logger.error("[DIRAC] jobs monitoring thread interrupted" + ex);
             } finally {
                 closeProcess(process);
             }
         }
 
+    }
+
+    private void checkMissingDiracJob(List<String> sentJobIds, List<String> returnedJobIds) {
+        if (sentJobIds.size() != returnedJobIds.size()) {
+            logger.info("[Dirac] size difference between sent (" + sentJobIds.size() +
+                    ") and received (" + returnedJobIds.size() + ") jobs" +
+                    " when checking status");
+        }
+        StringBuilder missingJobIds = new StringBuilder();
+        for (String sentJobId : sentJobIds) {
+            if ( !returnedJobIds.contains(sentJobId)) {
+                missingJobIds.append(sentJobId);
+                missingJobIds.append(" ");
+            }
+        }
+        if (missingJobIds.length() > 0) {
+            logger.info("[Dirac] missing dirac jobIds when checking status : " +
+                    missingJobIds.toString());
+        }
     }
 
     @Override
@@ -239,14 +264,10 @@ public class DiracMonitor extends GaswMonitor {
                     new DiracOutputParser(job.getId()).start();
                 }
             }
-        } catch (DAOException ex) {
-            // do nothing
-        } catch (GaswException ex) {
-            logger.error(ex);
-        } catch (IOException ex) {
-            logger.error(ex);
+        } catch (IOException | GaswException | DAOException ex) {
+            logger.error("[DIRAC] error killing job " + job.getId(), ex);
         } catch (InterruptedException ex) {
-            logger.error(ex);
+            logger.error("[DIRAC] job killing thread interrupted" + ex);
         } finally {
             closeProcess(process);
         }
@@ -275,12 +296,10 @@ public class DiracMonitor extends GaswMonitor {
                 jobDAO.update(job);
                 logger.info("Rescheduled DIRAC Job ID '" + job.getId() + "'.");
             }
-        } catch (DAOException ex) {
-            // do nothing
-        } catch (IOException ex) {
-            logger.error(ex);
+        } catch (IOException | DAOException ex) {
+            logger.error("[DIRAC] error rescheduling job " + job.getId(), ex);
         } catch (InterruptedException ex) {
-            logger.error(ex);
+            logger.error("[DIRAC] job rescheduling thread interrupted" + ex);
         } finally {
             closeProcess(process);
         }
@@ -318,7 +337,7 @@ public class DiracMonitor extends GaswMonitor {
             }
 
         } catch (DAOException ex) {
-            // do nothing
+            logger.error("[DIRAC] error killing replicas of job " + job.getId(), ex);
         }
     }
 
@@ -331,7 +350,7 @@ public class DiracMonitor extends GaswMonitor {
                     new JobPool(job.getFileName(), job.getCommand(), job.getParameters()));
 
         } catch (DAOException ex) {
-            // do nothing
+            logger.error("[DIRAC] error resuming job " + job.getId(), ex);
         }
     }
 
