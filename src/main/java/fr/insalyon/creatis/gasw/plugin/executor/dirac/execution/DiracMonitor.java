@@ -318,14 +318,15 @@ public class DiracMonitor extends GaswMonitor {
             logger.info("Replicating: " + job.getId() + " - " + job.getFileName());
             DiracDAOFactory.getInstance().getJobPoolDAO().add(
                     new JobPool(job.getFileName(), job.getCommand(), job.getParameters()));
-            // we change the status of a job that has just been replicated to
-            // avoid it being replicated another time at the next loop
-            // we use the SUCCESSFULLY_SUBMITTED status as at will permit
-            // the next run loop to update its status to its real one
-            //
-            // waiting for VIP to support a new REPLICATED status, then we will
-            // be able to use it to avoid this hack
+
+            // waiting for VIP to support a new REPLICATED status, we reset the
+            // status to SUCCESSFULLY_SUBMITTED
+
+            // we use the replicating field of Job to indicate that this job is
+            // being replicated, to avoid it to be replicated another time
+            // before the job is actually started
             job.setStatus(GaswStatus.SUCCESSFULLY_SUBMITTED);
+            job.setReplicating(true);
             jobDAO.update(job);
 
         } catch (DAOException ex) {
