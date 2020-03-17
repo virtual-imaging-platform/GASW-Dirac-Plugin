@@ -194,7 +194,7 @@ public class DiracSubmit extends GaswSubmit {
                 if (job.isReplicating()) {
                     job.setReplicating(false);
                     jobDAO.update(job);
-                    logger.info("Dirac Monitor: job \"" + job.getId() + "\" is now replicated");
+                    logger.info("Dirac Submit: job \"" + job.getId() + "\" is now replicated");
                 }
             }
 

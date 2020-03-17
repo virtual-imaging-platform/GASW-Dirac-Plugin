@@ -119,7 +119,22 @@ public class DiracMonitor extends GaswMonitor {
                             // update the status in case of change, or in case of job that has just been replicated
                             // (then it has the SUCCESSFULLY_SUBMITTED status)
 
-                            if (status == DiracStatus.Running && job.getStatus() != GaswStatus.RUNNING) {
+                            if (isReplica(job)) {
+                                // Another job of the same invocation has
+                                // finished succesfully (probably just before,
+                                // in the same monitor run)
+                                logger.info("Dirac Monitor: job \"" + job.getId() + "\" [ status : "
+                                        + job.getStatus() + " ] is a replicate of a finished job");
+                                if (job.getStatus() != GaswStatus.CANCELLED_REPLICA) {
+                                    logger.info("Dirac Monitor: job \"" + job.getId() +
+                                            "\" [ status : "+ job.getStatus() +
+                                            " ] is a replicate of a finished job" +
+                                            " but has not been properly killed");
+                                    job.setStatus(GaswStatus.CANCELLED_REPLICA);
+                                    updateStatus(job);
+                                    kill(job);
+                                }
+                            } else if (status == DiracStatus.Running && job.getStatus() != GaswStatus.RUNNING) {
 
                                 job.setStatus(GaswStatus.RUNNING);
                                 // in case of job just replicated (so in SUCCESSFULLY_SUBMITTED
@@ -140,7 +155,7 @@ public class DiracMonitor extends GaswMonitor {
                                 job.setStatus(GaswStatus.SUCCESSFULLY_SUBMITTED);
                                 updateStatus(job);
 
-                            } else if (!isReplica(job)) {
+                            } else {
 
                                 boolean finished = true;
 
