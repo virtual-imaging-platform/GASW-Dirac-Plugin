@@ -191,6 +191,11 @@ public class DiracMonitor extends GaswMonitor {
                                         finaliseJob(job,
                                                 GaswExitCode.EXECUTION_CANCELED.getExitCode());
                                     } else {
+                                        // As the job could be resubmited,
+                                        // mark it as replicating to avoid it
+                                        // being replicated
+                                        job.setReplicating(true);
+                                        jobDAO.update(job);
                                         new DiracOutputParser(job.getId()).start();
                                     }
 
