@@ -230,11 +230,12 @@ public class DiracMonitor extends GaswMonitor {
     }
 
     private void checkMissingDiracJob(List<String> sentJobIds, List<String> returnedJobIds) {
-        if (sentJobIds.size() != returnedJobIds.size()) {
-            logger.info("[Dirac] size difference between sent (" + sentJobIds.size() +
-                    ") and received (" + returnedJobIds.size() + ") jobs" +
-                    " when checking status");
+        if (sentJobIds.size() == returnedJobIds.size()) {
+            return;
         }
+        logger.error("[Dirac] size difference between sent (" + sentJobIds.size() +
+                ") and received (" + returnedJobIds.size() + ") jobs" +
+                " when checking status");
         StringBuilder missingJobIds = new StringBuilder();
         for (String sentJobId : sentJobIds) {
             if ( !returnedJobIds.contains(sentJobId)) {
