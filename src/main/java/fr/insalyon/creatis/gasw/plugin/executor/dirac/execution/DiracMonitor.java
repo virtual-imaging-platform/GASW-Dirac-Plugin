@@ -399,6 +399,7 @@ public class DiracMonitor extends GaswMonitor {
                         break;
                     case Outputs:
                         job.setUpload(minorStatus.getDate());
+                        break;
                 }
             }
             job.setExitCode(exitCode);
