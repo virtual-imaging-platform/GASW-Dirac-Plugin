@@ -140,11 +140,8 @@ public class DiracOutputParser extends GaswOutputParser {
             return new GaswOutput(job.getFileName() + ".jdl", gaswExitCode, "",
                     uploadedResults, appStdOut, appStdErr, stdOut, stdErr);
 
-        } catch (InterruptedException ex) {
-            logger.error(ex);
-            throw new GaswException(ex);
-        } catch (IOException ex) {
-            logger.error(ex);
+        } catch (InterruptedException | IOException ex) {
+            logger.error("[Dirac] Error getting gasw output", ex);
             throw new GaswException(ex);
         }
     }
