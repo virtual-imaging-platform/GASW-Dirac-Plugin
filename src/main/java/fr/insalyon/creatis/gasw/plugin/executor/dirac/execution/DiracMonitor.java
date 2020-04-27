@@ -182,22 +182,14 @@ public class DiracMonitor extends GaswMonitor {
                                     if (job.getDownload() == null) {
                                         job.setDownload(job.getQueued());
                                     }
+                                    // As the job could be resubmited,
+                                    // mark it as replicating to avoid it
+                                    // being replicated
+                                    job.setReplicating(true);
                                     updateStatus(job);
                                     logger.info("Dirac Monitor: job \"" + job.getId() + "\" finished as \"" + status + "\"");
 
-                                    // If cancelled, do not launch DiracOutputParser
-                                    // because it will check to resubmit the job
-                                    if (job.getStatus() == GaswStatus.CANCELLED) {
-                                        finaliseJob(job,
-                                                GaswExitCode.EXECUTION_CANCELED.getExitCode());
-                                    } else {
-                                        // As the job could be resubmited,
-                                        // mark it as replicating to avoid it
-                                        // being replicated
-                                        job.setReplicating(true);
-                                        jobDAO.update(job);
-                                        new DiracOutputParser(job.getId()).start();
-                                    }
+                                    new DiracOutputParser(job.getId()).start();
 
                                     if (job.getStatus() == GaswStatus.COMPLETED) {
                                         killReplicas(job);
@@ -286,7 +278,16 @@ public class DiracMonitor extends GaswMonitor {
                     job.setStatus(GaswStatus.CANCELLED);
                     updateStatus(job);
                 }
-                finaliseJob(job, GaswExitCode.EXECUTION_CANCELED.getExitCode());
+
+
+                if (GaswStatus.CANCELLED.equals(job.getStatus())) {
+                    // invocation is over, inform moteur and listeners
+                    new DiracOutputParser(job.getId()).start();
+                } else {
+                    // its a replica, gather few time information
+                    finaliseReplicaJob(job);
+                }
+
                 logger.info("Dirac Monitor: job \"" + job.getId() + "\" finished as \"" + job.getStatus() + "\"");
             }
         } catch (IOException | GaswException | DAOException ex) {
@@ -384,7 +385,7 @@ public class DiracMonitor extends GaswMonitor {
         }
     }
 
-    protected void finaliseJob(Job job, int exitCode) {
+    protected void finaliseReplicaJob(Job job) {
 
         try {
             job.setEnd(new Date());
@@ -402,7 +403,7 @@ public class DiracMonitor extends GaswMonitor {
                         break;
                 }
             }
-            job.setExitCode(exitCode);
+            job.setExitCode(GaswExitCode.EXECUTION_CANCELED.getExitCode());
             factory.getJobDAO().update(job);
 
         } catch (DAOException ex) {
