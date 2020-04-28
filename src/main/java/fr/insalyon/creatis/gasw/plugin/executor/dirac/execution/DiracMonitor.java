@@ -109,11 +109,13 @@ public class DiracMonitor extends GaswMonitor {
                         if (s.contains("JobID=")) {
 
                             String[] res = s.split(" ");
+                            String[] siteRes = s.split(";");
                             cout.append(s).append("\n");
 
                             String jobIdReturnedByDirac = res[0].replace("JobID=", "");
                             Job job = jobDAO.getJobByID(jobIdReturnedByDirac);
                             DiracStatus status = DiracStatus.valueOf(res[1].replace("Status=", "").replace(";", ""));
+                            String diracSite = siteRes[2].replace("Site=", "").replace(";", "");
 
                             jobIdsReturnedByDirac.add(jobIdReturnedByDirac);
                             // update the status in case of change, or in case of job that has just been replicated
@@ -188,6 +190,10 @@ public class DiracMonitor extends GaswMonitor {
                                     job.setReplicating(true);
                                     updateStatus(job);
                                     logger.info("Dirac Monitor: job \"" + job.getId() + "\" finished as \"" + status + "\"");
+
+                                    logger.info("Dirac Monitor: setting dirac Site to "+diracSite+" for job id "+jobIdReturnedByDirac);
+                                    job.setDiracSite(diracSite);
+                                    jobDAO.update(job);
 
                                     new DiracOutputParser(job.getId()).start();
 
