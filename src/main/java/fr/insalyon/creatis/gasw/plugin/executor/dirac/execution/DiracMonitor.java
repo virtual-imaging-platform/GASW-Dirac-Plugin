@@ -118,9 +118,7 @@ public class DiracMonitor extends GaswMonitor {
                             String diracSite = siteRes[2].replace("Site=", "").replace(";", "");
 
                             if ( (!diracSite.trim().equalsIgnoreCase("ANY")) && (job.getDiracSite()==null) ) {
-                                logger.info("Dirac Monitor: setting dirac Site to ***" + diracSite.trim() + "*** for job id " + jobIdReturnedByDirac);
                                 job.setDiracSite(diracSite.trim());
-                                jobDAO.update(job);
                             }
 
                             jobIdsReturnedByDirac.add(jobIdReturnedByDirac);
