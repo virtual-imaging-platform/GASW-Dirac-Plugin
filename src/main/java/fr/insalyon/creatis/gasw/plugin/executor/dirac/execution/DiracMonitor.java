@@ -109,11 +109,17 @@ public class DiracMonitor extends GaswMonitor {
                         if (s.contains("JobID=")) {
 
                             String[] res = s.split(" ");
+                            String[] siteRes = s.split(";");
                             cout.append(s).append("\n");
 
                             String jobIdReturnedByDirac = res[0].replace("JobID=", "");
                             Job job = jobDAO.getJobByID(jobIdReturnedByDirac);
                             DiracStatus status = DiracStatus.valueOf(res[1].replace("Status=", "").replace(";", ""));
+                            String diracSite = siteRes[2].replace("Site=", "").replace(";", "");
+
+                            if ( (!diracSite.trim().equalsIgnoreCase("ANY")) && (job.getDiracSite()==null) ) {
+                                job.setDiracSite(diracSite.trim());
+                            }
 
                             jobIdsReturnedByDirac.add(jobIdReturnedByDirac);
                             // update the status in case of change, or in case of job that has just been replicated
