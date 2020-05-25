@@ -42,6 +42,7 @@ import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracSubmit;
 import java.util.ArrayList;
 import java.util.List;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
+import org.apache.log4j.Logger;
 
 /**
  *
@@ -49,6 +50,8 @@ import net.xeoh.plugins.base.annotations.PluginImplementation;
  */
 @PluginImplementation
 public class DiracExecutor implements ExecutorPlugin {
+
+    private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
 
     private DiracSubmit diracSubmit;
 
@@ -59,6 +62,10 @@ public class DiracExecutor implements ExecutorPlugin {
 
     @Override
     public void load(GaswInput gaswInput) throws GaswException {
+
+        // fetch version from maven generated file
+        logger.info("Loading Dirac GASW Plugin version "
+                + getClass().getPackage().getImplementationVersion());
 
         DiracConfiguration.getInstance();
         diracSubmit = new DiracSubmit(gaswInput,  

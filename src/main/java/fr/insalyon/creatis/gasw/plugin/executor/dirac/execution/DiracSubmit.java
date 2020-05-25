@@ -33,14 +33,16 @@
 package fr.insalyon.creatis.gasw.plugin.executor.dirac.execution;
 
 import fr.insalyon.creatis.gasw.*;
-import fr.insalyon.creatis.gasw.dao.DAOException;
+import fr.insalyon.creatis.gasw.bean.Job;
+import fr.insalyon.creatis.gasw.dao.*;
 import fr.insalyon.creatis.gasw.execution.GaswSubmit;
+import fr.insalyon.creatis.gasw.plugin.ListenerPlugin;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.DiracDAOFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -55,7 +57,6 @@ public class DiracSubmit extends GaswSubmit {
     /**
      *
      * @param gaswInput
-     * @param userProxy
      */
     public DiracSubmit(GaswInput gaswInput,
             DiracMinorStatusServiceGenerator minorStatusServiceGenerator) throws GaswException {
@@ -146,6 +147,8 @@ public class DiracSubmit extends GaswSubmit {
                                 Integer.parseInt(id);
                                 JobPool job = jobs.get(i++);
 
+                                signalInvocationJob(job);
+
                                 DiracMonitor.getInstance().add(id,
                                         job.getCommand(), job.getFileName(),
                                         job.getParams());
@@ -167,14 +170,10 @@ public class DiracSubmit extends GaswSubmit {
                     }
                     Thread.sleep(GaswConfiguration.getInstance().getDefaultSleeptime() / 2);
 
-                } catch (DAOException ex) {
-                    // do nothing
+                } catch (IOException | GaswException | DAOException ex) {
+                    logger.error("[DIRAC] error submitting DIRAC jobs", ex);
                 } catch (InterruptedException ex) {
-                    logger.error(ex);
-                } catch (IOException ex) {
-                    logger.error(ex);
-                } catch (GaswException ex) {
-                    logger.error(ex);
+                    logger.error("[DIRAC] jobs submitting thread interrupted" + ex);
                 } finally {
                     closeProcess(process);
                 }
@@ -183,6 +182,24 @@ public class DiracSubmit extends GaswSubmit {
 
         public void terminate() {
             this.stop = true;
+        }
+    }
+
+    private void signalInvocationJob(JobPool jobPool) {
+        try {
+            JobDAO jobDAO = DAOFactory.getDAOFactory().getJobDAO();
+            // Defining invocation ID
+            List<Job> list = jobDAO.getByParameters(jobPool.getParams());
+            for (Job job : list) {
+                if (job.isReplicating()) {
+                    job.setReplicating(false);
+                    jobDAO.update(job);
+                    logger.info("Dirac Submit: job \"" + job.getId() + "\" is now replicated");
+                }
+            }
+
+        } catch (DAOException ex) {
+            logger.error("[DIRAC] error signaling replicating event", ex);
         }
     }
 
