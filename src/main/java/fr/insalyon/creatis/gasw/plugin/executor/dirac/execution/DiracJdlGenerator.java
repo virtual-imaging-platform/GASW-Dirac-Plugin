@@ -57,6 +57,7 @@ public class DiracJdlGenerator {
     private int priority;
     private String site;
     private StringBuilder bannedSites;
+    private StringBuilder defaultBannedSites;
     private String tags;
 
     public static DiracJdlGenerator getInstance() throws GaswException {
@@ -78,12 +79,14 @@ public class DiracJdlGenerator {
         this.priority = conf.getDefaultPriority();
         this.site = "";
         this.bannedSites = new StringBuilder();
+        this.defaultBannedSites = new StringBuilder();
         for (String bSite : DiracConfiguration.getInstance().getBannedSites()) {
-            if (bannedSites.length() > 0) {
-                this.bannedSites.append(",");
+            if (defaultBannedSites.length() > 0) {
+                this.defaultBannedSites.append(",");
             }
-            this.bannedSites.append(bSite);
+            this.defaultBannedSites.append(bSite);
         }
+        this.bannedSites = this.bannedSites.append(this.defaultBannedSites);
         this.tags = "";
     }
 
@@ -138,6 +141,8 @@ public class DiracJdlGenerator {
         }
 
         if (envVariables.containsKey(DiracConstants.ENV_BANNED_SITE)) {
+            this.bannedSites = new StringBuilder();
+            this.bannedSites = this.bannedSites.append(this.defaultBannedSites);
             bannedSites.append(envVariables.get(DiracConstants.ENV_BANNED_SITE));
         }
 
