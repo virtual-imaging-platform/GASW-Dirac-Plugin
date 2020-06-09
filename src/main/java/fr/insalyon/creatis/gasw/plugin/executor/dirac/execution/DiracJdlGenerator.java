@@ -56,7 +56,8 @@ public class DiracJdlGenerator {
     private int cpuTime;
     private int priority;
     private String site;
-    private StringBuilder bannedSites;
+    private String bannedSites;
+    private String defaultBannedSites;
     private String tags;
 
     public static DiracJdlGenerator getInstance() throws GaswException {
@@ -77,13 +78,16 @@ public class DiracJdlGenerator {
                 : GaswConfiguration.getInstance().getDefaultCPUTime();
         this.priority = conf.getDefaultPriority();
         this.site = "";
-        this.bannedSites = new StringBuilder();
+        this.defaultBannedSites = "";
+        StringBuilder bannedSitedBuilder = new StringBuilder();
         for (String bSite : DiracConfiguration.getInstance().getBannedSites()) {
-            if (bannedSites.length() > 0) {
-                this.bannedSites.append(",");
+            if (bannedSitedBuilder.length() > 0) {
+                bannedSitedBuilder.append(",");
             }
-            this.bannedSites.append(bSite);
+            bannedSitedBuilder.append(bSite);
         }
+        this.defaultBannedSites = bannedSitedBuilder.toString();
+        this.bannedSites = this.defaultBannedSites;
         this.tags = "";
     }
 
@@ -138,7 +142,11 @@ public class DiracJdlGenerator {
         }
 
         if (envVariables.containsKey(DiracConstants.ENV_BANNED_SITE)) {
-            bannedSites.append(envVariables.get(DiracConstants.ENV_BANNED_SITE));
+            if (defaultBannedSites.isEmpty()) {
+                bannedSites = envVariables.get(DiracConstants.ENV_BANNED_SITE);
+            } else {
+                bannedSites = this.defaultBannedSites + "," + envVariables.get(DiracConstants.ENV_BANNED_SITE);
+            }
         }
 
         tags = envVariables.getOrDefault(DiracConstants.ENV_TAGS, tags);
