@@ -79,11 +79,11 @@ public class DiracMonitor extends GaswMonitor {
     @Override
     public void run() {
         Process process = null;
-        try {
-            DiracJdlGenerator generator = DiracJdlGenerator.getInstance();
+        DiracJdlGenerator generator;
 
-            while (!stop) {
-
+        while (!stop) {
+            try {
+                generator = DiracJdlGenerator.getInstance();
                 verifySignaledJobs();
 
                 List<Job> jobsList = jobDAO.getActiveJobs();
@@ -119,7 +119,7 @@ public class DiracMonitor extends GaswMonitor {
                             DiracStatus status = DiracStatus.valueOf(res[1].replace("Status=", "").replace(";", ""));
                             String diracSite = siteRes[2].replace("Site=", "").replace(";", "").trim();
 
-                            if ( (!diracSite.equalsIgnoreCase("ANY")) && (job.getDiracSite()==null) ) {
+                            if ((!diracSite.equalsIgnoreCase("ANY")) && (job.getDiracSite() == null)) {
                                 logger.info("Dirac Monitor: setting dirac Site to ***" + diracSite + "*** for job id " + jobIdReturnedByDirac);
                                 job.setDiracSite(diracSite);
                                 jobDAO.update(job);
@@ -137,7 +137,7 @@ public class DiracMonitor extends GaswMonitor {
                                         + job.getStatus() + " ] is a replicate of a finished job");
                                 if (job.getStatus() != GaswStatus.CANCELLED_REPLICA) {
                                     logger.info("Dirac Monitor: job \"" + job.getId() +
-                                            "\" [ status : "+ job.getStatus() +
+                                            "\" [ status : " + job.getStatus() +
                                             " ] is a replicate of a finished job" +
                                             " but has not been properly killed");
                                     job.setStatus(GaswStatus.CANCELLED_REPLICA);
@@ -222,15 +222,15 @@ public class DiracMonitor extends GaswMonitor {
                     checkMissingDiracJob(command.subList(1, command.size()), jobIdsReturnedByDirac);
                 }
                 Thread.sleep(GaswConfiguration.getInstance().getDefaultSleeptime());
-            }
-        } catch (IOException | GaswException | DAOException ex) {
+
+            } catch (IOException | GaswException | DAOException ex) {
                 logger.error("[DIRAC] error monitoring DIRAC jobs", ex);
             } catch (InterruptedException ex) {
                 logger.error("[DIRAC] jobs monitoring thread interrupted" + ex);
             } finally {
                 closeProcess(process);
             }
-
+        }
     }
 
     private void checkMissingDiracJob(List<String> sentJobIds, List<String> returnedJobIds) {
