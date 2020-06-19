@@ -64,12 +64,12 @@ public class DiracFaultySites {
             long diff = Math.abs(duration.toMinutes());
             //exponential back-off
             if (diff < Math.pow(2, (this.nbErrors - 1))) {
-                logger.info("[DiracFaultySite] site " + siteName + " is banned since time diff in min since last failure is "+
-                        diff + ", and the number of errors is " +this.nbErrors);
+                logger.info("[DiracFaultySite] site " + siteName + " is banned since last failure was "+
+                        diff + " min ago, and the number of errors is " +this.nbErrors);
                 return true;
             } else {
-                logger.info("[DiracFaultySite] site " + siteName + " is NOT to be banned since time diff in min since last failure is "+
-                        diff + ", and the number of errors is " +this.nbErrors);
+                logger.info("[DiracFaultySite] site " + siteName + " is NOT to be banned since last failure was "+
+                        diff + " min ago, and the number of errors is " +this.nbErrors);
                 return false;
             }
         }

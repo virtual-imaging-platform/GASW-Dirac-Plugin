@@ -43,10 +43,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -67,7 +64,8 @@ public class DiracJdlGenerator {
     private String site;
     private String bannedSites;
     private String defaultBannedSites;
-    private DiracFaultySites diracFaultySites;
+    private Map<String, String> commandBannedSitesMap;
+    private Map<String, DiracFaultySites> commandFaultySitesMap;
     private String tags;
 
     public static DiracJdlGenerator getInstance() throws GaswException {
@@ -98,7 +96,8 @@ public class DiracJdlGenerator {
         }
         this.defaultBannedSites = bannedSitesBuilder.toString();
         this.bannedSites = this.defaultBannedSites;
-        this.diracFaultySites = new DiracFaultySites();
+        this.commandBannedSitesMap = new HashMap<String, String>();
+        this.commandFaultySitesMap = new HashMap<String, DiracFaultySites>();
         this.tags = "";
     }
 
@@ -119,6 +118,11 @@ public class DiracJdlGenerator {
             velocity.put("site", site);
             velocity.put("bannedSite", bannedSites);
             velocity.put("tags", tags);
+
+            String command = scriptName.replaceAll("(-[0-9]+.sh)$", "");
+            if (!commandBannedSitesMap.containsKey(command)) {
+                commandBannedSitesMap.put(command,bannedSites);
+            }
 
             return velocity.merge().toString();
 
@@ -163,34 +167,7 @@ public class DiracJdlGenerator {
         tags = envVariables.getOrDefault(DiracConstants.ENV_TAGS, tags);
     }
 
-    /**
-     *
-     * @param jdlFile Name of the jdl file to be modified.
-     * @param keyword – the keyword to match
-     * @return list – the lines containing the keyword
-     * TODO : improve method so that it uses a matching pattern and returns only one (first?) line
-     */
-    private List<String> getSelectedLineFromJdl(String jdlFile, String keyword) {
-        String jdlFilePath = GaswConstants.JDL_ROOT + "/" + jdlFile;
-        List<String> list = new ArrayList<>();
-        try (Stream<String> stream = Files.lines(Paths.get(jdlFilePath))) {
-            list = stream
-                    .filter(line -> line.contains(keyword))
-                    .collect(Collectors.toList());
-        } catch (IOException e) {
-            logger.error(e);
-        } finally {
-            return list;
-        }
-    }
 
-
-    /**
-     *
-     * @param jdlFile Name of the jdl file to be modified.
-     * @param keyword– the regular expression to match
-     * @param replacement – the string to be substituted for every match
-     */
     private void replaceLineInJdl (String jdlFile, String keyword, String replacement) {
         try {
             //replacing the whole line containing the keyword
@@ -207,48 +184,42 @@ public class DiracJdlGenerator {
     }
 
     public void updateBannedSitesInJdl (String jdlFile) throws GaswException {
-        List<String> newlyBannedSitesList = this.diracFaultySites.getBannedSitesList();
+        String command = jdlFile.replaceAll("(-[0-9]+.jdl)$", "");
+        List<String> newlyBannedSitesList = this.commandFaultySitesMap.get(command).getBannedSitesList();
         String keyword = "BannedSite";
         StringBuilder bannedSitesBuilder = new StringBuilder();
 
         if (!newlyBannedSitesList.isEmpty()) {
-            List<String> existingBannedSitesLines = getSelectedLineFromJdl(jdlFile, keyword);
-            if (existingBannedSitesLines.size()!= 1){
-                logger.warn("Found "+ existingBannedSitesLines.size()+" lines containing the BannedSite keyword in the jdl. Not able to update it.");
-            } else {
-                String firstLine = existingBannedSitesLines.get(0);
-                String existingBannedSites = firstLine.split("\"")[1].trim();
+
+            String existingBannedSites = this.commandBannedSitesMap.get(command);
+            if (!existingBannedSites.isEmpty()) {
                 String[] existingBannedSitesArray = existingBannedSites.split(",");
-
-                if(!existingBannedSites.isEmpty()){
-                    for (String bSite : existingBannedSitesArray) {
-                        if (newlyBannedSitesList.contains(bSite)) {
-                            newlyBannedSitesList.remove(bSite);
-                        }
+                for (String bSite : existingBannedSitesArray) {
+                    if (newlyBannedSitesList.contains(bSite)) {
+                        newlyBannedSitesList.remove(bSite);
                     }
-                    bannedSitesBuilder.append(existingBannedSites);
                 }
-                if (!newlyBannedSitesList.isEmpty()){
-                    for (String bSite : newlyBannedSitesList) {
-                        if (bannedSitesBuilder.length() > 0) {
-                            bannedSitesBuilder.append(",");
-                        }
-                        bannedSitesBuilder.append(bSite);
-                    }
-                    String finalLine = "BannedSite = \""+bannedSitesBuilder.toString()+ "\";";
-                    replaceLineInJdl (jdlFile, keyword, finalLine);
-                    logger.info("Replacing old banned sites with new list: "+finalLine);
-                } else{
-                    logger.info("No extra banned sites");
-                }
+                bannedSitesBuilder.append(existingBannedSites);
             }
-
-        } else{
-            logger.info("No newly banned sites");
+            if (!newlyBannedSitesList.isEmpty()) {
+                for (String bSite : newlyBannedSitesList) {
+                    if (bannedSitesBuilder.length() > 0) {
+                        bannedSitesBuilder.append(",");
+                    }
+                    bannedSitesBuilder.append(bSite);
+                }
+                String finalLine = "BannedSite = \"" + bannedSitesBuilder.toString() + "\";";
+                replaceLineInJdl(jdlFile, keyword, finalLine);
+                logger.info("Replacing old banned sites with new list: " + finalLine + " for command " + command);
+            }
         }
+
     }
 
-    public DiracFaultySites getDiracFaultySites (){
-        return this.diracFaultySites;
+    public DiracFaultySites getDiracFaultySites (String command){
+        if (!commandFaultySitesMap.containsKey(command)) {
+            commandFaultySitesMap.put(command,new DiracFaultySites());
+        }
+        return this.commandFaultySitesMap.get(command);
     }
 }

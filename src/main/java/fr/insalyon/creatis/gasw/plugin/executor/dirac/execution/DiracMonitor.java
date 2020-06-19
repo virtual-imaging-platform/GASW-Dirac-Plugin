@@ -81,7 +81,6 @@ public class DiracMonitor extends GaswMonitor {
         Process process = null;
         try {
             DiracJdlGenerator generator = DiracJdlGenerator.getInstance();
-            DiracFaultySites diracFaultySites = generator.getDiracFaultySites();
 
             while (!stop) {
 
@@ -173,11 +172,11 @@ public class DiracMonitor extends GaswMonitor {
                                 switch (status) {
                                     case Done:
                                         job.setStatus(GaswStatus.COMPLETED);
-                                        diracFaultySites.reportSuccessOnSite(job.getDiracSite());
+                                        generator.getDiracFaultySites((job.getCommand())).reportSuccessOnSite(job.getDiracSite());
                                         break;
                                     case Failed:
                                         job.setStatus(GaswStatus.ERROR);
-                                        diracFaultySites.reportErrorOnSite(job.getDiracSite());
+                                        generator.getDiracFaultySites((job.getCommand())).reportErrorOnSite(job.getDiracSite());
                                         break;
                                     case Killed:
                                         job.setStatus(GaswStatus.CANCELLED);
