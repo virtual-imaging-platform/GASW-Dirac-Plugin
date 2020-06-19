@@ -39,8 +39,17 @@ import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConstants;
 import fr.insalyon.creatis.gasw.util.VelocityUtil;
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -58,6 +67,7 @@ public class DiracJdlGenerator {
     private String site;
     private String bannedSites;
     private String defaultBannedSites;
+    private DiracFaultySites diracFaultySites;
     private String tags;
 
     public static DiracJdlGenerator getInstance() throws GaswException {
@@ -79,15 +89,16 @@ public class DiracJdlGenerator {
         this.priority = conf.getDefaultPriority();
         this.site = "";
         this.defaultBannedSites = "";
-        StringBuilder bannedSitedBuilder = new StringBuilder();
+        StringBuilder bannedSitesBuilder = new StringBuilder();
         for (String bSite : DiracConfiguration.getInstance().getBannedSites()) {
-            if (bannedSitedBuilder.length() > 0) {
-                bannedSitedBuilder.append(",");
+            if (bannedSitesBuilder.length() > 0) {
+                bannedSitesBuilder.append(",");
             }
-            bannedSitedBuilder.append(bSite);
+            bannedSitesBuilder.append(bSite);
         }
-        this.defaultBannedSites = bannedSitedBuilder.toString();
+        this.defaultBannedSites = bannedSitesBuilder.toString();
         this.bannedSites = this.defaultBannedSites;
+        this.diracFaultySites = new DiracFaultySites();
         this.tags = "";
     }
 
@@ -150,5 +161,94 @@ public class DiracJdlGenerator {
         }
 
         tags = envVariables.getOrDefault(DiracConstants.ENV_TAGS, tags);
+    }
+
+    /**
+     *
+     * @param jdlFile Name of the jdl file to be modified.
+     * @param keyword – the keyword to match
+     * @return list – the lines containing the keyword
+     * TODO : improve method so that it uses a matching pattern and returns only one (first?) line
+     */
+    private List<String> getSelectedLineFromJdl(String jdlFile, String keyword) {
+        String jdlFilePath = GaswConstants.JDL_ROOT + "/" + jdlFile;
+        List<String> list = new ArrayList<>();
+        try (Stream<String> stream = Files.lines(Paths.get(jdlFilePath))) {
+            list = stream
+                    .filter(line -> line.contains(keyword))
+                    .collect(Collectors.toList());
+        } catch (IOException e) {
+            logger.error(e);
+        } finally {
+            return list;
+        }
+    }
+
+
+    /**
+     *
+     * @param jdlFile Name of the jdl file to be modified.
+     * @param keyword– the regular expression to match
+     * @param replacement – the string to be substituted for every match
+     */
+    private void replaceLineInJdl (String jdlFile, String keyword, String replacement) {
+        try {
+            //replacing the whole line containing the keyword
+            String regex = "(.*"+keyword+".*)";
+            String jdlFilePath = GaswConstants.JDL_ROOT + "/" + jdlFile;
+            Path path = Paths.get(jdlFilePath);
+            Stream <String> lines = Files.lines(path);
+            List <String> replaced = lines.map(line -> line.replaceAll(regex, replacement)).collect(Collectors.toList());
+            Files.write(path, replaced);
+            lines.close();
+        } catch (IOException e) {
+            logger.error(e);
+        }
+    }
+
+    public void updateBannedSitesInJdl (String jdlFile) throws GaswException {
+        List<String> newlyBannedSitesList = this.diracFaultySites.getBannedSitesList();
+        String keyword = "BannedSite";
+        StringBuilder bannedSitesBuilder = new StringBuilder();
+
+        if (!newlyBannedSitesList.isEmpty()) {
+            List<String> existingBannedSitesLines = getSelectedLineFromJdl(jdlFile, keyword);
+            if (existingBannedSitesLines.size()!= 1){
+                logger.warn("Found "+ existingBannedSitesLines.size()+" lines containing the BannedSite keyword in the jdl. Not able to update it.");
+            } else {
+                String firstLine = existingBannedSitesLines.get(0);
+                String existingBannedSites = firstLine.split("\"")[1].trim();
+                String[] existingBannedSitesArray = existingBannedSites.split(",");
+
+                if(!existingBannedSites.isEmpty()){
+                    for (String bSite : existingBannedSitesArray) {
+                        if (newlyBannedSitesList.contains(bSite)) {
+                            newlyBannedSitesList.remove(bSite);
+                        }
+                    }
+                    bannedSitesBuilder.append(existingBannedSites);
+                }
+                if (!newlyBannedSitesList.isEmpty()){
+                    for (String bSite : newlyBannedSitesList) {
+                        if (bannedSitesBuilder.length() > 0) {
+                            bannedSitesBuilder.append(",");
+                        }
+                        bannedSitesBuilder.append(bSite);
+                    }
+                    String finalLine = "BannedSite = \""+bannedSitesBuilder.toString()+ "\";";
+                    replaceLineInJdl (jdlFile, keyword, finalLine);
+                    logger.info("Replacing old banned sites with new list: "+finalLine);
+                } else{
+                    logger.info("No extra banned sites");
+                }
+            }
+
+        } else{
+            logger.info("No newly banned sites");
+        }
+    }
+
+    public DiracFaultySites getDiracFaultySites (){
+        return this.diracFaultySites;
     }
 }

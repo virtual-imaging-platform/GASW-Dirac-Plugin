@@ -79,9 +79,12 @@ public class DiracMonitor extends GaswMonitor {
     @Override
     public void run() {
         Process process = null;
+        try {
+            DiracJdlGenerator generator = DiracJdlGenerator.getInstance();
+            DiracFaultySites diracFaultySites = generator.getDiracFaultySites();
 
-        while (!stop) {
-            try {
+            while (!stop) {
+
                 verifySignaledJobs();
 
                 List<Job> jobsList = jobDAO.getActiveJobs();
@@ -170,9 +173,11 @@ public class DiracMonitor extends GaswMonitor {
                                 switch (status) {
                                     case Done:
                                         job.setStatus(GaswStatus.COMPLETED);
+                                        diracFaultySites.reportSuccessOnSite(job.getDiracSite());
                                         break;
                                     case Failed:
                                         job.setStatus(GaswStatus.ERROR);
+                                        diracFaultySites.reportErrorOnSite(job.getDiracSite());
                                         break;
                                     case Killed:
                                         job.setStatus(GaswStatus.CANCELLED);
@@ -218,14 +223,14 @@ public class DiracMonitor extends GaswMonitor {
                     checkMissingDiracJob(command.subList(1, command.size()), jobIdsReturnedByDirac);
                 }
                 Thread.sleep(GaswConfiguration.getInstance().getDefaultSleeptime());
-            } catch (IOException | GaswException | DAOException ex) {
+            }
+        } catch (IOException | GaswException | DAOException ex) {
                 logger.error("[DIRAC] error monitoring DIRAC jobs", ex);
             } catch (InterruptedException ex) {
                 logger.error("[DIRAC] jobs monitoring thread interrupted" + ex);
             } finally {
                 closeProcess(process);
             }
-        }
 
     }
 
