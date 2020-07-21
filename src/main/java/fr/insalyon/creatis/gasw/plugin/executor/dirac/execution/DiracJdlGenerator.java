@@ -39,8 +39,14 @@ import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConstants;
 import fr.insalyon.creatis.gasw.util.VelocityUtil;
 import java.io.File;
-import java.util.Map;
-import java.util.Random;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -56,7 +62,10 @@ public class DiracJdlGenerator {
     private int cpuTime;
     private int priority;
     private String site;
-    private StringBuilder bannedSites;
+    private String bannedSites;
+    private String defaultBannedSites;
+    private Map<String, String> commandBannedSitesMap;
+    private Map<String, DiracFaultySites> commandFaultySitesMap;
     private String tags;
 
     public static DiracJdlGenerator getInstance() throws GaswException {
@@ -77,13 +86,18 @@ public class DiracJdlGenerator {
                 : GaswConfiguration.getInstance().getDefaultCPUTime();
         this.priority = conf.getDefaultPriority();
         this.site = "";
-        this.bannedSites = new StringBuilder();
+        this.defaultBannedSites = "";
+        StringBuilder bannedSitesBuilder = new StringBuilder();
         for (String bSite : DiracConfiguration.getInstance().getBannedSites()) {
-            if (bannedSites.length() > 0) {
-                this.bannedSites.append(",");
+            if (bannedSitesBuilder.length() > 0) {
+                bannedSitesBuilder.append(",");
             }
-            this.bannedSites.append(bSite);
+            bannedSitesBuilder.append(bSite);
         }
+        this.defaultBannedSites = bannedSitesBuilder.toString();
+        this.bannedSites = this.defaultBannedSites;
+        this.commandBannedSitesMap = new HashMap<String, String>();
+        this.commandFaultySitesMap = new HashMap<String, DiracFaultySites>();
         this.tags = "";
     }
 
@@ -104,6 +118,11 @@ public class DiracJdlGenerator {
             velocity.put("site", site);
             velocity.put("bannedSite", bannedSites);
             velocity.put("tags", tags);
+
+            String command = scriptName.replaceAll("(-[0-9]+.sh)$", "");
+            if (!commandBannedSitesMap.containsKey(command)) {
+                commandBannedSitesMap.put(command,bannedSites);
+            }
 
             return velocity.merge().toString();
 
@@ -138,9 +157,69 @@ public class DiracJdlGenerator {
         }
 
         if (envVariables.containsKey(DiracConstants.ENV_BANNED_SITE)) {
-            bannedSites.append(envVariables.get(DiracConstants.ENV_BANNED_SITE));
+            if (defaultBannedSites.isEmpty()) {
+                bannedSites = envVariables.get(DiracConstants.ENV_BANNED_SITE);
+            } else {
+                bannedSites = this.defaultBannedSites + "," + envVariables.get(DiracConstants.ENV_BANNED_SITE);
+            }
         }
 
         tags = envVariables.getOrDefault(DiracConstants.ENV_TAGS, tags);
+    }
+
+
+    private void replaceLineInJdl (String jdlFile, String keyword, String replacement) {
+        try {
+            //replacing the whole line containing the keyword
+            String regex = "(.*"+keyword+".*)";
+            String jdlFilePath = GaswConstants.JDL_ROOT + "/" + jdlFile;
+            Path path = Paths.get(jdlFilePath);
+            Stream <String> lines = Files.lines(path);
+            List <String> replaced = lines.map(line -> line.replaceAll(regex, replacement)).collect(Collectors.toList());
+            Files.write(path, replaced);
+            lines.close();
+        } catch (IOException e) {
+            logger.error(e);
+        }
+    }
+
+    public void updateBannedSitesInJdl (String jdlFile) throws GaswException {
+        String command = jdlFile.replaceAll("(-[0-9]+.jdl)$", "");
+        List<String> newlyBannedSitesList = this.commandFaultySitesMap.get(command).getBannedSitesList();
+        String keyword = "BannedSite";
+        StringBuilder bannedSitesBuilder = new StringBuilder();
+
+        if (!newlyBannedSitesList.isEmpty()) {
+
+            String existingBannedSites = this.commandBannedSitesMap.get(command);
+            if (!existingBannedSites.isEmpty()) {
+                String[] existingBannedSitesArray = existingBannedSites.split(",");
+                for (String bSite : existingBannedSitesArray) {
+                    if (newlyBannedSitesList.contains(bSite)) {
+                        newlyBannedSitesList.remove(bSite);
+                    }
+                }
+                bannedSitesBuilder.append(existingBannedSites);
+            }
+            if (!newlyBannedSitesList.isEmpty()) {
+                for (String bSite : newlyBannedSitesList) {
+                    if (bannedSitesBuilder.length() > 0) {
+                        bannedSitesBuilder.append(",");
+                    }
+                    bannedSitesBuilder.append(bSite);
+                }
+                String finalLine = "BannedSite = \"" + bannedSitesBuilder.toString() + "\";";
+                replaceLineInJdl(jdlFile, keyword, finalLine);
+                logger.info("Replacing old banned sites with new list: " + finalLine + " for command " + command);
+            }
+        }
+
+    }
+
+    public DiracFaultySites getDiracFaultySites (String command){
+        if (!commandFaultySitesMap.containsKey(command)) {
+            commandFaultySitesMap.put(command,new DiracFaultySites());
+        }
+        return this.commandFaultySitesMap.get(command);
     }
 }

@@ -43,6 +43,8 @@ import java.io.File;
 import java.io.IOException;
 import org.apache.log4j.Logger;
 
+import static fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracJdlGenerator.*;
+
 /**
  *
  * @author Rafael Ferreira da Silva, Tram Truong Huu
@@ -198,6 +200,8 @@ public class DiracOutputParser extends GaswOutputParser {
 
     @Override
     protected void resubmit() throws GaswException {
+        DiracJdlGenerator generator = DiracJdlGenerator.getInstance();
+        generator.updateBannedSitesInJdl(job.getFileName() + ".jdl");
         try {
             DiracDAOFactory.getInstance().getJobPoolDAO().add(
                     new JobPool(job.getFileName(), job.getCommand(), job.getParameters()));
@@ -207,4 +211,5 @@ public class DiracOutputParser extends GaswOutputParser {
         }
 
     }
+
 }
