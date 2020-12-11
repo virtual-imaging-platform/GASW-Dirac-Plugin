@@ -4,7 +4,7 @@
 
     <groupId>fr.insalyon.creatis</groupId>
     <artifactId>gasw-dirac-plugin</artifactId>
-    <version>3.3.0</version>
+    <version>3.4.0</version>
     <packaging>jar</packaging>
 
     <name>GASW-Dirac-Plugin</name>
@@ -62,6 +62,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
+                <version>3.2.0</version>
                 <configuration>
                     <archive>
                         <manifest>
@@ -98,7 +99,7 @@
         <dependency>
             <groupId>fr.insalyon.creatis</groupId>
             <artifactId>gasw</artifactId>
-            <version>3.5.0</version>
+            <version>3.6.0</version>
             <scope>provided</scope>
         </dependency>
 

@@ -114,10 +114,9 @@ public class DiracOutputParser extends GaswOutputParser {
                     logger.error(cout);
                     String message = "Output files do not exist.";
                     logger.error(message + " Job ID: " + job.getId());
+                    handleFiles (message);
 
                     parseNonStdOut(GaswExitCode.ERROR_GET_STD.getExitCode());
-
-                    saveFiles(message);
                     gaswExitCode = GaswExitCode.ERROR_GET_STD;
                 }
 
@@ -136,7 +135,7 @@ public class DiracOutputParser extends GaswOutputParser {
                     parseNonStdOut(GaswExitCode.EXECUTION_STALLED.getExitCode());
                 }
 
-                saveFiles(message);
+                handleFiles(message);
             }
 
             return new GaswOutput(job.getFileName() + ".jdl", gaswExitCode, "",
@@ -177,6 +176,28 @@ public class DiracOutputParser extends GaswOutputParser {
         stdErr = saveFile(GaswConstants.ERR_EXT, GaswConstants.ERR_ROOT, content);
         appStdOut = saveFile(GaswConstants.OUT_APP_EXT, GaswConstants.OUT_ROOT, content);
         appStdErr = saveFile(GaswConstants.ERR_APP_EXT, GaswConstants.ERR_ROOT, content);
+    }
+
+    /**
+     *
+     * Get StdOutErr files from the previous job of the same invocation
+     */
+    private void getPreviousFiles(GaswOutput previousGaswOutput) {
+        stdOut = previousGaswOutput.getStdOut();
+        stdErr = previousGaswOutput.getStdErr();
+        appStdOut = previousGaswOutput.getAppStdOut();
+        appStdErr = previousGaswOutput.getAppStdErr();
+    }
+
+    private void handleFiles (String message){
+        GaswOutput previousGaswOutput = GaswNotification.getInstance().getGaswOutputFromLastFailedJob(job.getFileName() + ".jdl");
+        if (previousGaswOutput !=  null) {
+            logger.info("Getting previous StdOutErr files for job instance "+job.getFileName());
+            getPreviousFiles (previousGaswOutput);
+        } else {
+            logger.info("Saving StdOutErr files with message "+message);
+            saveFiles(message);
+        }
     }
 
     /**
