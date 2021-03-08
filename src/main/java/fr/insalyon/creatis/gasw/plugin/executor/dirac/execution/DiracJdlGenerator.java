@@ -58,7 +58,6 @@ public class DiracJdlGenerator {
     private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
     private static DiracJdlGenerator instance;
     private String scriptPath;
-    private String submitPool;
     private int cpuTime;
     private int priority;
     private String site;
@@ -80,7 +79,6 @@ public class DiracJdlGenerator {
         DiracConfiguration conf = DiracConfiguration.getInstance();
 
         this.scriptPath = new File(GaswConstants.SCRIPT_ROOT).getAbsolutePath();
-        this.submitPool = conf.getDefaultPool();
         this.cpuTime = conf.isBalanceEnabled()
                 ? GaswConfiguration.getInstance().getDefaultCPUTime() + ((new Random()).nextInt(10) * 900)
                 : GaswConfiguration.getInstance().getDefaultCPUTime();
@@ -113,7 +111,6 @@ public class DiracJdlGenerator {
             velocity.put("scriptPath", scriptPath);
             velocity.put("scriptName", scriptName);
             velocity.put("cpuTime", cpuTime);
-            velocity.put("submitPool", submitPool);
             velocity.put("priority", priority);
             velocity.put("site", site);
             velocity.put("bannedSite", bannedSites);
@@ -139,10 +136,6 @@ public class DiracJdlGenerator {
      * @return
      */
     private void parseEnvironment(Map<String, String> envVariables) {
-
-        if (envVariables.containsKey(DiracConstants.ENV_POOL)) {
-            submitPool = envVariables.get(DiracConstants.ENV_POOL);
-        }
 
         if (envVariables.containsKey(DiracConstants.ENV_PRIORITY)) {
             priority = Integer.parseInt(envVariables.get(DiracConstants.ENV_PRIORITY));

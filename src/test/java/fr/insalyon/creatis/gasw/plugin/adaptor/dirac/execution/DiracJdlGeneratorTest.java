@@ -89,7 +89,6 @@ public class DiracJdlGeneratorTest {
         assertTrue(result.contains("InputSandbox    = {\""));
         assertTrue(result.contains("OutputSandbox   = {\"std.out\", \"std.err\"};"));
         assertTrue(result.contains("CPUTime         = \"1800\";"));
-        assertTrue(result.contains("SubmitPools     = {\"defaultPool\"};"));
         assertTrue(result.contains("Priority        = 0;"));
         assertTrue(result.contains("Site            = \"\";"));
         assertTrue(result.contains("BannedSite      = \"first.banned.site,second.banned.site\";"));
