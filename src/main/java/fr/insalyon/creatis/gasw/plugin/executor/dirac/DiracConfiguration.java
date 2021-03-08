@@ -59,7 +59,7 @@ public class DiracConfiguration {
     private int notificationPort;
     private boolean balanceEnabled;
     private List<Object> bannedSites;
-    private List<Object> namesToIgnore;
+    private List<Object> siteNamesToIgnore;
 
     public static DiracConfiguration getInstance() throws GaswException {
 
@@ -119,7 +119,7 @@ public class DiracConfiguration {
         this.notificationPort = notificationPort;
         this.balanceEnabled = balanceEnabled;
         this.bannedSites = bannedSites;
-        this.namesToIgnore = namesToIgnore;
+        this.siteNamesToIgnore = namesToIgnore;
     }
 
     private DiracConfiguration() throws GaswException {
@@ -137,7 +137,7 @@ public class DiracConfiguration {
             notificationPort = config.getInt(DiracConstants.LAB_NOTIFICATION_PORT, 50009);
             balanceEnabled = config.getBoolean(DiracConstants.LAB_BALANCE_ENABLED, false);
             bannedSites = config.getList(DiracConstants.LAB_CONF_BANNED_SITES, new ArrayList());
-            namesToIgnore = config.getList(DiracConstants.LAB_CONF_NAMES_TO_IGNORE, Arrays.asList("Any", "Multiple"));
+            siteNamesToIgnore = config.getList(DiracConstants.LAB_CONF_SITE_NAMES_TO_IGNORE, Arrays.asList("Any", "Multiple"));
 
             config.setProperty(DiracConstants.LAB_HOST, host);
             config.setProperty(DiracConstants.LAB_DEFAULT_POOL, defaultPool);
@@ -149,7 +149,7 @@ public class DiracConfiguration {
             config.setProperty(DiracConstants.LAB_NOTIFICATION_PORT, notificationPort);
             config.setProperty(DiracConstants.LAB_BALANCE_ENABLED, balanceEnabled);
             config.setProperty(DiracConstants.LAB_CONF_BANNED_SITES, bannedSites);
-            config.setProperty(DiracConstants.LAB_CONF_NAMES_TO_IGNORE, namesToIgnore);
+            config.setProperty(DiracConstants.LAB_CONF_SITE_NAMES_TO_IGNORE, siteNamesToIgnore);
 
             config.save();
 
@@ -198,7 +198,7 @@ public class DiracConfiguration {
         return bannedSites.toArray(new String[]{});
     }
 
-    public List<Object> getNamesToIgnore() {
-        return namesToIgnore;
+    public List<Object> getSiteNamesToIgnore() {
+        return siteNamesToIgnore;
     }
 }

@@ -50,7 +50,7 @@ public class DiracConstants {
     public static final String LAB_NOTIFICATION_ENABLED = "plugin.dirac.notification.enabled";
     public static final String LAB_NOTIFICATION_PORT = "plugin.dirac.notification.port";
     public static final String LAB_CONF_BANNED_SITES = "plugin.dirac.conf.sites.banned";
-    public static final String LAB_CONF_NAMES_TO_IGNORE = "plugin.dirac.conf.names.ignore";
+    public static final String LAB_CONF_SITE_NAMES_TO_IGNORE = "plugin.dirac.conf.sites.ignored";
     // Environment Variables
     public static final String ENV_BANNED_SITE = "diracBannedSite";
     public static final String ENV_MAX_CPU_TIME = "diracMaxCPUTime";
