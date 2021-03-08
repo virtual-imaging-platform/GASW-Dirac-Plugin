@@ -53,7 +53,6 @@ public class DiracConstants {
     // Environment Variables
     public static final String ENV_BANNED_SITE = "diracBannedSite";
     public static final String ENV_MAX_CPU_TIME = "diracMaxCPUTime";
-    public static final String ENV_POOL = "diracPool";
     public static final String ENV_PRIORITY = "diracPriority";
     public static final String ENV_SITE = "diracSite";
     public static final String ENV_TAGS = "diracTag";
