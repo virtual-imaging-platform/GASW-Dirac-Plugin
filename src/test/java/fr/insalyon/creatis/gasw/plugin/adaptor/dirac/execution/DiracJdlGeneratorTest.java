@@ -38,7 +38,8 @@ public class DiracJdlGeneratorTest {
             false,
             3306,
             false,
-            Arrays.asList("first.banned.site", "second.banned.site"));
+            Arrays.asList("first.banned.site", "second.banned.site"),
+            Arrays.asList("Any", "Multiple"));
     }
 
     @AfterAll
