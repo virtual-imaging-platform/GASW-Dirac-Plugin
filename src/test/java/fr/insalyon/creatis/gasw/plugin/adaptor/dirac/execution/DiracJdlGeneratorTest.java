@@ -81,7 +81,7 @@ public class DiracJdlGeneratorTest {
         String result = generator.generate("scriptName", envVariables);
 
         // Then
-        assertEquals(11, result.split("\n").length);
+        assertEquals(10, result.split("\n").length);
         assertTrue(result.contains("JobName         = \"scriptName - GASW-Dirac-Plugin\";"));
         assertTrue(result.contains("Executable      = \"scriptName\";"));
         assertTrue(result.contains("StdOutput       = \"std.out\";"));
@@ -106,7 +106,7 @@ public class DiracJdlGeneratorTest {
         String result = generator.generate("scriptName", envVariables);
 
         // Then
-        assertEquals(12, result.split("\n").length);
+        assertEquals(11, result.split("\n").length);
         assertTrue(result.contains("Tags            = \"creatisGpu\";"));
     }
 }
