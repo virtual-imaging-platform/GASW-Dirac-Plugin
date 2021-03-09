@@ -35,6 +35,7 @@ package fr.insalyon.creatis.gasw.plugin.executor.dirac;
 import fr.insalyon.creatis.gasw.GaswConfiguration;
 import fr.insalyon.creatis.gasw.GaswException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -58,6 +59,7 @@ public class DiracConfiguration {
     private int notificationPort;
     private boolean balanceEnabled;
     private List<Object> bannedSites;
+    private List<Object> siteNamesToIgnore;
 
     public static DiracConfiguration getInstance() throws GaswException {
 
@@ -77,7 +79,8 @@ public class DiracConfiguration {
         boolean notificationEnabled,
         int notificationPort,
         boolean balanceEnabled,
-        List<Object> bannedSites) {
+        List<Object> bannedSites,
+        List<Object> namesToIgnore) {
 
         instance = new DiracConfiguration(
             host,
@@ -89,7 +92,8 @@ public class DiracConfiguration {
             notificationEnabled,
             notificationPort,
             balanceEnabled,
-            bannedSites);
+            bannedSites,
+            namesToIgnore);
     }
 
     private DiracConfiguration(
@@ -102,7 +106,8 @@ public class DiracConfiguration {
         boolean notificationEnabled,
         int notificationPort,
         boolean balanceEnabled,
-        List<Object> bannedSites) {
+        List<Object> bannedSites,
+        List<Object> namesToIgnore) {
 
         this.host = host;
         this.defaultPool = defaultPool;
@@ -114,6 +119,7 @@ public class DiracConfiguration {
         this.notificationPort = notificationPort;
         this.balanceEnabled = balanceEnabled;
         this.bannedSites = bannedSites;
+        this.siteNamesToIgnore = namesToIgnore;
     }
 
     private DiracConfiguration() throws GaswException {
@@ -131,6 +137,7 @@ public class DiracConfiguration {
             notificationPort = config.getInt(DiracConstants.LAB_NOTIFICATION_PORT, 50009);
             balanceEnabled = config.getBoolean(DiracConstants.LAB_BALANCE_ENABLED, false);
             bannedSites = config.getList(DiracConstants.LAB_CONF_BANNED_SITES, new ArrayList());
+            siteNamesToIgnore = config.getList(DiracConstants.LAB_CONF_SITE_NAMES_TO_IGNORE, Arrays.asList("Any", "Multiple"));
 
             config.setProperty(DiracConstants.LAB_HOST, host);
             config.setProperty(DiracConstants.LAB_DEFAULT_POOL, defaultPool);
@@ -142,6 +149,7 @@ public class DiracConfiguration {
             config.setProperty(DiracConstants.LAB_NOTIFICATION_PORT, notificationPort);
             config.setProperty(DiracConstants.LAB_BALANCE_ENABLED, balanceEnabled);
             config.setProperty(DiracConstants.LAB_CONF_BANNED_SITES, bannedSites);
+            config.setProperty(DiracConstants.LAB_CONF_SITE_NAMES_TO_IGNORE, siteNamesToIgnore);
 
             config.save();
 
@@ -188,5 +196,9 @@ public class DiracConfiguration {
 
     public String[] getBannedSites() {
         return bannedSites.toArray(new String[]{});
+    }
+
+    public List<Object> getSiteNamesToIgnore() {
+        return siteNamesToIgnore;
     }
 }
