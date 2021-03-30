@@ -185,6 +185,7 @@ public class DiracMonitor extends GaswMonitor {
                                         job.setStatus(GaswStatus.STALLED);
                                         break;
                                     case Completed:
+                                    case Completing:
                                         logger.info("Dirac Monitor: job \"" + job.getId() + "\" has status \"" + status + "\"");
                                     default:
                                         finished = false;
