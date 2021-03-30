@@ -42,6 +42,7 @@ public enum DiracStatus {
 
     Checking,
     Completed,
+    Completing,
     Deleted,
     Done,
     Failed,
