@@ -4,15 +4,15 @@
 
     <groupId>fr.insalyon.creatis</groupId>
     <artifactId>gasw-dirac-plugin</artifactId>
-    <version>3.5.1</version>
+    <version>3.6.0</version>
     <packaging>jar</packaging>
 
     <name>GASW-Dirac-Plugin</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>1.8</maven.compiler.source>
-        <maven.compiler.target>1.8</maven.compiler.target>
+        <maven.compiler.source>11</maven.compiler.source>
+        <maven.compiler.target>11</maven.compiler.target>
     </properties>
 
     <licenses>
@@ -99,7 +99,7 @@
         <dependency>
             <groupId>fr.insalyon.creatis</groupId>
             <artifactId>gasw</artifactId>
-            <version>3.6.0</version>
+            <version>3.7.0</version>
             <scope>provided</scope>
         </dependency>
 
@@ -110,5 +110,27 @@
           <scope>test</scope>
         </dependency>
     </dependencies>
+    
+    <repositories>
+        <repository>
+            <id>creatis</id>
+            <name>Creatis Insa Lyon repository [creatis]</name>
+            <url>https://vip.creatis.insa-lyon.fr:9007/nexus/repository/public</url>
+        </repository>
+    </repositories>
 
+    <distributionManagement>
+        <repository>
+            <id>creatis-releases</id>
+            <name>Internal Releases</name>
+            <url>https://vip.creatis.insa-lyon.fr:9007/nexus/repository/releases</url>
+        </repository>
+
+        <snapshotRepository>
+            <id>creatis-snapshots</id>
+            <name>Internal Snapshots</name>
+            <url>https://vip.creatis.insa-lyon.fr:9007/nexus/repository/snapshots</url>
+        </snapshotRepository>
+
+    </distributionManagement>
 </project>
