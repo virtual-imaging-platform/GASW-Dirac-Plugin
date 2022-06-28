@@ -43,9 +43,8 @@ import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.DiracDAOFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
+
 import org.apache.log4j.Logger;
 
 /**
@@ -110,14 +109,14 @@ public class DiracMonitor extends GaswMonitor {
 
                         if (s.contains("JobID=")) {
 
-                            String[] res = s.split(" ");
-                            String[] siteRes = s.split(";");
                             cout.append(s).append("\n");
 
-                            String jobIdReturnedByDirac = res[0].replace("JobID=", "");
+                            Map<JobInfoType, String> jobInfos = getJobInfos(s);
+
+                            String jobIdReturnedByDirac = jobInfos.get(JobInfoType.JOBID);
+                            DiracStatus status = DiracStatus.valueOf(jobInfos.get(JobInfoType.STATUS));
+                            String diracSite = jobInfos.get(JobInfoType.SITE);
                             Job job = jobDAO.getJobByID(jobIdReturnedByDirac);
-                            DiracStatus status = DiracStatus.valueOf(res[1].replace("Status=", "").replace(";", ""));
-                            String diracSite = siteRes[2].replace("Site=", "").replace(";", "").trim();
 
                             if ( (job.getDiracSite() == null) && !(DiracConfiguration.getInstance().getSiteNamesToIgnore().contains(diracSite)) ) {
                                 logger.info("Dirac Monitor: setting dirac Site to ***" + diracSite + "*** for job id " + jobIdReturnedByDirac);
@@ -231,6 +230,48 @@ public class DiracMonitor extends GaswMonitor {
             } finally {
                 closeProcess(process);
             }
+        }
+    }
+
+    private enum JobInfoType {
+        JOBID("JobID"),
+        STATUS("Status"),
+        SITE("Site");
+
+        private String text;
+        JobInfoType(String text) {
+            this.text = text;
+        }
+        String getText() {
+            return this.text;
+        }
+    }
+
+    // format is
+    // JobID=121476332 ApplicationStatus=Unknown; MinorStatus=Execution Complete; Status=Done; Site=EGI.LPC.fr;
+    // OR
+    // JobID=2 Status=Done; MinorStatus=Execution Complete; Site=EELA.UTFSM.cl;
+    private Map<JobInfoType,String> getJobInfos(String diracStatusLine) {
+        String[] lineParts = diracStatusLine.split(" ");
+        Map<JobInfoType,String> infoMap = new HashMap<>();
+        enrich(infoMap, lineParts[0], JobInfoType.JOBID);
+        // remove JobID part
+        diracStatusLine = diracStatusLine.substring(diracStatusLine.indexOf(" ") + 1);
+        lineParts = diracStatusLine.split(";");
+        for (String linePart : lineParts) {
+            enrich(infoMap, linePart, JobInfoType.STATUS);
+            enrich(infoMap, linePart, JobInfoType.SITE);
+        }
+        return infoMap;
+    }
+
+    private void enrich(Map<JobInfoType,String> infoMap, String linePart, JobInfoType jobInfoType) {
+        linePart = linePart.trim();
+        String searchedText = jobInfoType.getText() + "=";
+        if (linePart.startsWith(searchedText)) {
+            String value = linePart.replace(searchedText, "");
+            value = value.trim();
+            infoMap.put(jobInfoType, value);
         }
     }
 
