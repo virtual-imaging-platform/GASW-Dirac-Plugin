@@ -47,10 +47,24 @@ public enum DiracStatus {
     Done,
     Failed,
     Killed,
-    Matched,
+    Matched(true),
     Received,
     Rescheduled,
-    Running,
+    Running(true),
     Stalled,
-    Waiting
+    Waiting;
+
+    private boolean canBeKilled;
+
+    DiracStatus() {
+        this(false);
+    }
+
+    DiracStatus(boolean canBeKilled) {
+        this.canBeKilled = canBeKilled;
+    }
+
+    public boolean canBeKilled() {
+        return canBeKilled;
+    }
 };

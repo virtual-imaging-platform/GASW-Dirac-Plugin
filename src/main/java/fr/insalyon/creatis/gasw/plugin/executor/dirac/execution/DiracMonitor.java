@@ -130,18 +130,22 @@ public class DiracMonitor extends GaswMonitor {
 
                             if (isReplica(job)) {
                                 // Another job of the same invocation has
-                                // finished succesfully (probably just before,
+                                // finished successfully (probably just before,
                                 // in the same monitor run)
                                 logger.info("Dirac Monitor: job \"" + job.getId() + "\" [ status : "
                                         + job.getStatus() + " ] is a replicate of a finished job");
-                                if (job.getStatus() != GaswStatus.CANCELLED_REPLICA) {
+                                if (job.getStatus() != GaswStatus.CANCELLED_REPLICA && job.getStatus() != GaswStatus.DELETED_REPLICA) {
                                     logger.info("Dirac Monitor: job \"" + job.getId() +
                                             "\" [ status : " + job.getStatus() +
                                             " ] is a replicate of a finished job" +
                                             " but has not been properly killed");
-                                    job.setStatus(GaswStatus.CANCELLED_REPLICA);
+                                    job.setStatus(GaswStatus.KILL_REPLICA);
                                     updateStatus(job);
-                                    kill(job);
+                                    if (status.canBeKilled()) {
+                                        killRunnnigJob(job);
+                                    } else {
+                                        kill(job);
+                                    }
                                 }
                             } else if (status == DiracStatus.Running && job.getStatus() != GaswStatus.RUNNING) {
 
@@ -306,10 +310,18 @@ public class DiracMonitor extends GaswMonitor {
 
     @Override
     protected void kill(Job job) {
+        this.kill(job, false);
+    }
 
+    protected void killRunnnigJob(Job job) {
+        this.kill(job, true);
+    }
+
+    protected void kill(Job job, boolean isRunning) {
         Process process = null;
         try {
-            process = GaswUtil.getProcess(logger, "dirac-wms-job-kill", job.getId());
+            String command = isRunning  ? "dirac-wms-job-kill" : "dirac-wms-job-delete";
+            process = GaswUtil.getProcess(logger, command, job.getId());
             process.waitFor();
 
             BufferedReader br = GaswUtil.getBufferedReader(process);
@@ -321,20 +333,41 @@ public class DiracMonitor extends GaswMonitor {
             br.close();
 
             if (process.exitValue() != 0) {
+                logger.error("Error using " + command + " on job " + job.getId());
                 logger.error(cout);
             } else {
-                logger.info("Killed DIRAC Job ID '" + job.getId()
-                        + "' (current status : " + job.getStatus() + ")");
-                if (GaswStatus.KILL_REPLICA.equals(job.getStatus())) {
-                    job.setStatus(GaswStatus.CANCELLED_REPLICA);
-                    updateStatus(job);
-                } else if (! GaswStatus.CANCELLED_REPLICA.equals(job.getStatus())) {
-                    job.setStatus(GaswStatus.CANCELLED);
-                    updateStatus(job);
+                logger.info( (isRunning ? "Killed" : "Deleted") + " DIRAC Job ID '" + job.getId()  + "' (current status : " + job.getStatus() + ")");
+                // update status to set a final one : CANCELLED or DELETED, with an optional _REPLICA suffix
+                // at the beginning, status should be KILL or KILL_REPLICA, but we keep support if it was already a final one
+                switch (job.getStatus()) {
+                    case KILL_REPLICA:
+                        job.setStatus(isRunning ? GaswStatus.CANCELLED_REPLICA : GaswStatus.DELETED_REPLICA);
+                        break;
+                    case KILL:
+                        job.setStatus(isRunning ? GaswStatus.CANCELLED : GaswStatus.DELETED);
+                        break;
+                    case CANCELLED:
+                        logger.warn("A canceled job should not have a kill request");
+                        if ( ! isRunning) {
+                            job.setStatus(GaswStatus.DELETED);
+                        }
+                        break;
+                    case CANCELLED_REPLICA:
+                        logger.warn("A canceled job should not have a kill request");
+                        if ( ! isRunning) {
+                            job.setStatus(GaswStatus.DELETED_REPLICA);
+                        }
+                        break;
+                    case DELETED:
+                    case DELETED_REPLICA:
+                    default:
+                        logger.error("Wrong job status to have a kill request " + job.getStatus());
+                        break;
                 }
 
+                updateStatus(job);
 
-                if (GaswStatus.CANCELLED.equals(job.getStatus())) {
+                if (GaswStatus.CANCELLED.equals(job.getStatus()) || GaswStatus.DELETED.equals(job.getStatus())) {
                     // invocation is over, inform moteur and listeners
                     new DiracOutputParser(job.getId()).start();
                 } else {
@@ -416,9 +449,14 @@ public class DiracMonitor extends GaswMonitor {
         try {
             for (Job j : jobDAO.getActiveJobsByInvocationID(job.getInvocationID())) {
                 logger.info("Killing replica: " + j.getId() + " - " + j.getFileName());
+                boolean isRunning = ( GaswStatus.RUNNING == j.getStatus() );
                 j.setStatus(GaswStatus.KILL_REPLICA);
                 jobDAO.update(job);
-                kill(j);
+                if (isRunning) {
+                    kill(j);
+                } else {
+                    killRunnnigJob(j);
+                }
             }
 
         } catch (DAOException ex) {
