@@ -67,6 +67,7 @@ public class DiracOutputParser extends GaswOutputParser {
             GaswExitCode gaswExitCode = GaswExitCode.UNDEFINED;
 
             if (job.getStatus() != GaswStatus.CANCELLED
+                    && job.getStatus() != GaswStatus.DELETED
                     && job.getStatus() != GaswStatus.STALLED) {
 
                 Process process = GaswUtil.getProcess(logger, "dirac-wms-job-get-output", job.getId());
@@ -127,6 +128,10 @@ public class DiracOutputParser extends GaswOutputParser {
                 String message;
                 if (job.getStatus() == GaswStatus.CANCELLED) {
                     message = "Job Cancelled";
+                    gaswExitCode = GaswExitCode.EXECUTION_CANCELED;
+                    parseNonStdOut(GaswExitCode.EXECUTION_CANCELED.getExitCode());
+                } else  if (job.getStatus() == GaswStatus.DELETED) {
+                    message = "Job Deleted";
                     gaswExitCode = GaswExitCode.EXECUTION_CANCELED;
                     parseNonStdOut(GaswExitCode.EXECUTION_CANCELED.getExitCode());
                 } else {
