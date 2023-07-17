@@ -195,6 +195,9 @@ public class DiracMonitor extends GaswMonitor {
                                 }
 
                                 if (finished) {
+                                    if (job.getQueued() == null) {
+                                        job.setQueued(job.getCreation());
+                                    }
                                     if (job.getDownload() == null) {
                                         job.setDownload(job.getQueued());
                                     }

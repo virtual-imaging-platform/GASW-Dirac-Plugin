@@ -4,7 +4,7 @@
 
     <groupId>fr.insalyon.creatis</groupId>
     <artifactId>gasw-dirac-plugin</artifactId>
-    <version>3.8.0</version>
+    <version>3.9.0</version>
     <packaging>jar</packaging>
 
     <name>GASW-Dirac-Plugin</name>
