@@ -141,6 +141,11 @@ public class DiracSubmit extends GaswSubmit {
                         while ((s = br.readLine()) != null) {
                             cout += s + "\n";
                             try {
+                                if (s.startsWith("<==")) {
+                                    // dirac 8 output starts with <=====8.0.24=====>
+                                    // we must ignore that
+                                    continue;
+                                }
                                 String id = s.substring(s.lastIndexOf("=")
                                         + 2, s.length()).trim();
 
