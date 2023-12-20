@@ -54,6 +54,7 @@ public class DiracOutputParser extends GaswOutputParser {
     private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
     private File stdOut;
     private File stdErr;
+    private File provenance;
 
     public DiracOutputParser(String jobID) {
 
@@ -74,8 +75,10 @@ public class DiracOutputParser extends GaswOutputParser {
                 process.waitFor();
 
                 if (process.exitValue() == 0) {
-                    stdOut = getStdFile(GaswConstants.OUT_EXT, GaswConstants.OUT_ROOT);
-                    stdErr = getStdFile(GaswConstants.ERR_EXT, GaswConstants.ERR_ROOT);
+                    stdOut = moveDiracOutputStdFile(GaswConstants.OUT_EXT, GaswConstants.OUT_ROOT);
+                    stdErr = moveDiracOutputStdFile(GaswConstants.ERR_EXT, GaswConstants.ERR_ROOT);
+                    provenance = moveDiracOutputProvenanceFile();
+
 
                     new File("./" + job.getId()).delete();
 
@@ -159,16 +162,13 @@ public class DiracOutputParser extends GaswOutputParser {
      * @param directory Output directory
      * @return
      */
-    private File getStdFile(String extension, String directory) {
+    private File moveDiracOutputStdFile(String extension, String directory) {
+        File stdFile = new File("./" + job.getId() + "/" + "std" + extension);
+        return moveAppFile(stdFile, extension, directory);
+    }
 
-        File stdDir = new File(directory);
-        if (!stdDir.exists()) {
-            stdDir.mkdir();
-        }
-        File stdFile = new File("./" + job.getId() + "/std" + extension);
-        File stdRenamed = new File(directory + "/" + job.getFileName() + ".sh" + extension);
-        stdFile.renameTo(stdRenamed);
-        return stdRenamed;
+    private File moveDiracOutputProvenanceFile() {
+        return super.moveProvenanceFile("./" + job.getId());
     }
 
     /**
