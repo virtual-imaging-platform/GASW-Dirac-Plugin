@@ -58,6 +58,7 @@ public class DiracConfiguration {
     private boolean notificationEnabled;
     private int notificationPort;
     private boolean balanceEnabled;
+    private boolean dynamicBanEnabled;
     private List<Object> bannedSites;
     private List<Object> siteNamesToIgnore;
 
@@ -79,6 +80,7 @@ public class DiracConfiguration {
         boolean notificationEnabled,
         int notificationPort,
         boolean balanceEnabled,
+        boolean dynamicBanEnabled,
         List<Object> bannedSites,
         List<Object> namesToIgnore) {
 
@@ -92,6 +94,7 @@ public class DiracConfiguration {
             notificationEnabled,
             notificationPort,
             balanceEnabled,
+            dynamicBanEnabled,
             bannedSites,
             namesToIgnore);
     }
@@ -106,6 +109,7 @@ public class DiracConfiguration {
         boolean notificationEnabled,
         int notificationPort,
         boolean balanceEnabled,
+        boolean dynamicBanEnabled,
         List<Object> bannedSites,
         List<Object> namesToIgnore) {
 
@@ -118,6 +122,7 @@ public class DiracConfiguration {
         this.notificationEnabled = notificationEnabled;
         this.notificationPort = notificationPort;
         this.balanceEnabled = balanceEnabled;
+        this.dynamicBanEnabled = dynamicBanEnabled;
         this.bannedSites = bannedSites;
         this.siteNamesToIgnore = namesToIgnore;
     }
@@ -136,6 +141,7 @@ public class DiracConfiguration {
             notificationEnabled = config.getBoolean(DiracConstants.LAB_NOTIFICATION_ENABLED, false);
             notificationPort = config.getInt(DiracConstants.LAB_NOTIFICATION_PORT, 50009);
             balanceEnabled = config.getBoolean(DiracConstants.LAB_BALANCE_ENABLED, false);
+            dynamicBanEnabled = config.getBoolean(DiracConstants.LAB_CONF_DYNAMIC_BAN_ENABLED, true);
             bannedSites = config.getList(DiracConstants.LAB_CONF_BANNED_SITES, new ArrayList());
             siteNamesToIgnore = config.getList(DiracConstants.LAB_CONF_SITE_NAMES_TO_IGNORE, Arrays.asList("Any", "Multiple"));
 
@@ -148,6 +154,7 @@ public class DiracConfiguration {
             config.setProperty(DiracConstants.LAB_NOTIFICATION_ENABLED, notificationEnabled);
             config.setProperty(DiracConstants.LAB_NOTIFICATION_PORT, notificationPort);
             config.setProperty(DiracConstants.LAB_BALANCE_ENABLED, balanceEnabled);
+            config.setProperty(DiracConstants.LAB_CONF_DYNAMIC_BAN_ENABLED, dynamicBanEnabled);
             config.setProperty(DiracConstants.LAB_CONF_BANNED_SITES, bannedSites);
             config.setProperty(DiracConstants.LAB_CONF_SITE_NAMES_TO_IGNORE, siteNamesToIgnore);
 
@@ -192,6 +199,10 @@ public class DiracConfiguration {
 
     public int getNotificationPort() {
         return notificationPort;
+    }
+
+    public boolean isDynamicBanEnabled() {
+        return dynamicBanEnabled;
     }
 
     public String[] getBannedSites() {

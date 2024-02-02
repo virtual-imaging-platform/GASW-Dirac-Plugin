@@ -36,6 +36,7 @@ import fr.insalyon.creatis.gasw.*;
 import fr.insalyon.creatis.gasw.dao.DAOException;
 import fr.insalyon.creatis.gasw.execution.GaswOutputParser;
 import fr.insalyon.creatis.gasw.execution.GaswStatus;
+import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.DiracDAOFactory;
 import java.io.BufferedReader;
@@ -227,7 +228,12 @@ public class DiracOutputParser extends GaswOutputParser {
     @Override
     protected void resubmit() throws GaswException {
         DiracJdlGenerator generator = DiracJdlGenerator.getInstance();
-        generator.updateBannedSitesInJdl(job.getFileName() + ".jdl");
+        if (DiracConfiguration.getInstance().isDynamicBanEnabled()) {
+            logger.info("Dynamic ban enabled : updating the banned site list");
+            generator.updateBannedSitesInJdl(job.getFileName() + ".jdl");
+        } else {
+            logger.info("Dynamic ban NOT enabled : NOT updating the banned site list");
+        }
         try {
             DiracDAOFactory.getInstance().getJobPoolDAO().add(
                     new JobPool(job.getFileName(), job.getCommand(), job.getParameters()));
