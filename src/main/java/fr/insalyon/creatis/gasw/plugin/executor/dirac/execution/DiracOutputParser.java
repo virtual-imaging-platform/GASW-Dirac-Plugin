@@ -42,6 +42,8 @@ import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.DiracDAOFactory;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
+
 import org.apache.log4j.Logger;
 
 import static fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracJdlGenerator.*;
@@ -58,101 +60,125 @@ public class DiracOutputParser extends GaswOutputParser {
     private File provenance;
 
     public DiracOutputParser(String jobID) {
-
         super(jobID);
     }
 
     @Override
     public GaswOutput getGaswOutput() throws GaswException {
 
-        try {
-            GaswExitCode gaswExitCode = GaswExitCode.UNDEFINED;
+        GaswExitCode gaswExitCode;
 
-            if (job.getStatus() != GaswStatus.CANCELLED
-                    && job.getStatus() != GaswStatus.DELETED
-                    && job.getStatus() != GaswStatus.STALLED) {
+        if (job.getStatus() != GaswStatus.CANCELLED
+                && job.getStatus() != GaswStatus.DELETED
+                && job.getStatus() != GaswStatus.STALLED) {
 
-                Process process = GaswUtil.getProcess(logger, "dirac-wms-job-get-output", job.getId());
-                process.waitFor();
+            int remainingTries = 3;
 
-                if (process.exitValue() == 0) {
-                    stdOut = moveDiracOutputStdFile(GaswConstants.OUT_EXT, GaswConstants.OUT_ROOT);
-                    stdErr = moveDiracOutputStdFile(GaswConstants.ERR_EXT, GaswConstants.ERR_ROOT);
-                    provenance = moveDiracOutputProvenanceFile();
-
-
-                    new File("./" + job.getId()).delete();
-
-                    int exitCode = parseStdOut(stdOut);
-                    exitCode = parseStdErr(stdErr, exitCode);
-
-                    switch (exitCode) {
-                        case 0:
-                            gaswExitCode = GaswExitCode.SUCCESS;
-                            break;
-                        case 1:
-                            gaswExitCode = GaswExitCode.ERROR_READ_GRID;
-                            break;
-                        case 2:
-                            gaswExitCode = GaswExitCode.ERROR_WRITE_GRID;
-                            break;
-                        case 3:
-                            gaswExitCode = GaswExitCode.ERROR_FILE_NOT_FOUND;
-                            break;
-                        case 6:
-                            gaswExitCode = GaswExitCode.EXECUTION_FAILED;
-                            break;
-                        case 7:
-                            gaswExitCode = GaswExitCode.ERROR_WRITE_LOCAL;
-                            break;
-                    }
-                } else {
-
-                    BufferedReader br = GaswUtil.getBufferedReader(process);
-                    String cout = "";
-                    String s = null;
-                    while ((s = br.readLine()) != null) {
-                        cout += s;
-                    }
-                    br.close();
-
-                    logger.error(cout);
-                    String message = "Output files do not exist.";
-                    logger.error(message + " Job ID: " + job.getId());
-                    handleFiles (message);
-
-                    parseNonStdOut(GaswExitCode.ERROR_GET_STD.getExitCode());
-                    gaswExitCode = GaswExitCode.ERROR_GET_STD;
-                }
-
-                closeProcess(process);
-
-            } else {
-
-                String message;
-                if (job.getStatus() == GaswStatus.CANCELLED) {
-                    message = "Job Cancelled";
-                    gaswExitCode = GaswExitCode.EXECUTION_CANCELED;
-                    parseNonStdOut(GaswExitCode.EXECUTION_CANCELED.getExitCode());
-                } else  if (job.getStatus() == GaswStatus.DELETED) {
-                    message = "Job Deleted";
-                    gaswExitCode = GaswExitCode.EXECUTION_CANCELED;
-                    parseNonStdOut(GaswExitCode.EXECUTION_CANCELED.getExitCode());
-                } else {
-                    message = "Job Stalled";
-                    gaswExitCode = GaswExitCode.EXECUTION_STALLED;
-                    parseNonStdOut(GaswExitCode.EXECUTION_STALLED.getExitCode());
-                }
-
-                handleFiles(message);
+            gaswExitCode = getAndParseDiracOutputFiles();
+            while ( remainingTries > 0 && GaswExitCode.UNDEFINED.equals(gaswExitCode) ) {
+                logger.error("[Dirac] Error downloading logs for " + job.getId() + " . Remaining tries : " + remainingTries);
+                remainingTries--;
+                waitForNSeconds(10);
+                gaswExitCode = getAndParseDiracOutputFiles();
             }
 
-            return new GaswOutput(job.getFileName() + ".jdl", gaswExitCode, "",
-                    uploadedResults, appStdOut, appStdErr, stdOut, stdErr);
+            if (GaswExitCode.UNDEFINED.equals(gaswExitCode)) {
+                logger.error("[Dirac] dirac-wms-job-get-output failed 4 times for " + job.getId());
+                String message = "Output files do not exist.";
+                handleFiles (message);
 
+                parseNonStdOut(GaswExitCode.ERROR_GET_STD.getExitCode());
+                gaswExitCode = GaswExitCode.ERROR_GET_STD;
+            }
+
+        } else {
+
+            String message;
+            if (job.getStatus() == GaswStatus.CANCELLED) {
+                message = "Job Cancelled";
+                gaswExitCode = GaswExitCode.EXECUTION_CANCELED;
+                parseNonStdOut(GaswExitCode.EXECUTION_CANCELED.getExitCode());
+            } else  if (job.getStatus() == GaswStatus.DELETED) {
+                message = "Job Deleted";
+                gaswExitCode = GaswExitCode.EXECUTION_CANCELED;
+                parseNonStdOut(GaswExitCode.EXECUTION_CANCELED.getExitCode());
+            } else {
+                message = "Job Stalled";
+                gaswExitCode = GaswExitCode.EXECUTION_STALLED;
+                parseNonStdOut(GaswExitCode.EXECUTION_STALLED.getExitCode());
+            }
+
+            handleFiles(message);
+        }
+
+        return new GaswOutput(job.getFileName() + ".jdl", gaswExitCode, "",
+                uploadedResults, appStdOut, appStdErr, stdOut, stdErr);
+    }
+
+    private void waitForNSeconds(int n) throws GaswException {
+        try {
+            TimeUnit.SECONDS.sleep(10);
+        } catch (InterruptedException e) {
+            logger.error("[Dirac] Error getting gasw output", e);
+            throw new GaswException(e);
+        }
+    }
+    /*
+        In case of success, return the GaswExitCode
+        In case of error, return GaswExitCode.UNDEFINED
+     */
+    private GaswExitCode getAndParseDiracOutputFiles() throws GaswException {
+        Process process = null;
+        try {
+            process = GaswUtil.getProcess(logger, "dirac-wms-job-get-output", job.getId());
+            process.waitFor();
+
+            if (process.exitValue() != 0) {
+                BufferedReader br = GaswUtil.getBufferedReader(process);
+                String cout = "";
+                String s = null;
+                while ((s = br.readLine()) != null) {
+                    cout += s;
+                }
+                br.close();
+
+                logger.error("[Dirac] Error doing dirac-wms-job-get-output for Job ID: " + job.getId() + " | Status : " + process.exitValue());
+                logger.error(cout);
+                return GaswExitCode.UNDEFINED;
+            }
+
+            stdOut = moveDiracOutputStdFile(GaswConstants.OUT_EXT, GaswConstants.OUT_ROOT);
+            stdErr = moveDiracOutputStdFile(GaswConstants.ERR_EXT, GaswConstants.ERR_ROOT);
+            provenance = moveDiracOutputProvenanceFile();
+
+
+            new File("./" + job.getId()).delete();
+
+            int exitCode = parseStdOut(stdOut);
+            exitCode = parseStdErr(stdErr, exitCode);
+
+            switch (exitCode) {
+                case 0:
+                    return GaswExitCode.SUCCESS;
+                case 1:
+                    return GaswExitCode.ERROR_READ_GRID;
+                case 2:
+                    return GaswExitCode.ERROR_WRITE_GRID;
+                case 3:
+                    return GaswExitCode.ERROR_FILE_NOT_FOUND;
+                case 6:
+                    return GaswExitCode.EXECUTION_FAILED;
+                case 7:
+                    return GaswExitCode.ERROR_WRITE_LOCAL;
+                default:
+                    logger.error("[Dirac] Error after parsing job logs, unknown exit code : " + exitCode);
+                    return GaswExitCode.UNDEFINED;
+            }
         } catch (InterruptedException | IOException ex) {
             logger.error("[Dirac] Error getting gasw output", ex);
             throw new GaswException(ex);
+        } finally {
+            closeProcess(process);
         }
     }
 
