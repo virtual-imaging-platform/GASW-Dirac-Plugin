@@ -38,6 +38,7 @@ public class DiracJdlGeneratorTest {
             false,
             3306,
             false,
+            true,
             Arrays.asList("first.banned.site", "second.banned.site"),
             Arrays.asList("Any", "Multiple"));
     }
@@ -87,7 +88,7 @@ public class DiracJdlGeneratorTest {
         assertTrue(result.contains("StdOutput       = \"std.out\";"));
         assertTrue(result.contains("StdError        = \"std.err\";"));
         assertTrue(result.contains("InputSandbox    = {\""));
-        assertTrue(result.contains("OutputSandbox   = {\"std.out\", \"std.err\"};"));
+        assertTrue(result.contains("OutputSandbox   = {\"std.out\", \"std.err\", \"scriptName.provenance.json\"};"));
         assertTrue(result.contains("CPUTime         = \"1800\";"));
         assertTrue(result.contains("Priority        = 0;"));
         assertTrue(result.contains("Site            = \"\";"));
