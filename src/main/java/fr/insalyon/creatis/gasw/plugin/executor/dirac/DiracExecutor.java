@@ -32,6 +32,12 @@
  */
 package fr.insalyon.creatis.gasw.plugin.executor.dirac;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.log4j.Logger;
+
 import fr.insalyon.creatis.gasw.GaswException;
 import fr.insalyon.creatis.gasw.GaswInput;
 import fr.insalyon.creatis.gasw.plugin.ExecutorPlugin;
@@ -39,10 +45,7 @@ import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracMinorStatusServiceGenerator;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracMonitor;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracSubmit;
-import java.util.ArrayList;
-import java.util.List;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -68,8 +71,12 @@ public class DiracExecutor implements ExecutorPlugin {
                 + getClass().getPackage().getImplementationVersion());
 
         DiracConfiguration.getInstance();
-        diracSubmit = new DiracSubmit(gaswInput,  
-                DiracMinorStatusServiceGenerator.getInstance());
+        try {
+            diracSubmit = new DiracSubmit(gaswInput,  
+                    DiracMinorStatusServiceGenerator.getInstance());
+        } catch (GaswException | IOException e) {
+            e.printStackTrace();
+        }
     }
 
     @Override

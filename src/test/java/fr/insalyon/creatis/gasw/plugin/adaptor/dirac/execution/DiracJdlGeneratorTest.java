@@ -1,15 +1,14 @@
 package fr.insalyon.creatis.gasw.plugin.executor.dirac.execution;
 
-import fr.insalyon.creatis.gasw.GaswException;
-import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
-import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConstants;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.io.IOException;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.Files;
 import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,13 +17,16 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import fr.insalyon.creatis.gasw.GaswException;
+import fr.insalyon.creatis.gasw.GaswInput;
+import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
+import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConstants;
+import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracJdlGenerator;
 
 @DisplayName("Dirac JDL generation tests")
 public class DiracJdlGeneratorTest {
+    private static GaswInput gaswInput;
 
     @BeforeAll
     public static void createConfiguration() {
@@ -79,7 +81,7 @@ public class DiracJdlGeneratorTest {
         envVariables.put(DiracConstants.ENV_TAGS, "");
 
         // When
-        String result = generator.generate("scriptName", envVariables);
+        String result = generator.generate("scriptName", envVariables, gaswInput.isMoteurLiteEnabled());
 
         // Then
         assertEquals(10, result.split("\n").length);
@@ -104,7 +106,7 @@ public class DiracJdlGeneratorTest {
         envVariables.put(DiracConstants.ENV_TAGS, "creatisGpu");
 
         // When
-        String result = generator.generate("scriptName", envVariables);
+        String result = generator.generate("scriptName", envVariables,gaswInput.isMoteurLiteEnabled());
 
         // Then
         assertEquals(11, result.split("\n").length);
