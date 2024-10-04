@@ -32,22 +32,26 @@
  */
 package fr.insalyon.creatis.gasw.plugin.executor.dirac.execution;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+import org.apache.log4j.Logger;
+
 import fr.insalyon.creatis.gasw.GaswConfiguration;
 import fr.insalyon.creatis.gasw.GaswConstants;
 import fr.insalyon.creatis.gasw.GaswException;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConstants;
 import fr.insalyon.creatis.gasw.util.VelocityUtil;
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-
-import org.apache.log4j.Logger;
 
 /**
  *
@@ -66,6 +70,9 @@ public class DiracJdlGenerator {
     private Map<String, String> commandBannedSitesMap;
     private Map<String, DiracFaultySites> commandFaultySitesMap;
     private String tags;
+    private String invPath;
+    private String configPath;
+    private String workflowFile;
 
     public static DiracJdlGenerator getInstance() throws GaswException {
         if (instance == null) {
@@ -79,6 +86,10 @@ public class DiracJdlGenerator {
         DiracConfiguration conf = DiracConfiguration.getInstance();
 
         this.scriptPath = new File(GaswConstants.SCRIPT_ROOT).getAbsolutePath();
+        this.invPath = new File(GaswConstants.INVOCATION_DIR).getAbsolutePath();
+        this.configPath = new File(GaswConstants.CONFIG_DIR).getAbsolutePath();
+        this.workflowFile = new File("workflow.json").getAbsolutePath();
+
         this.cpuTime = conf.isBalanceEnabled()
                 ? GaswConfiguration.getInstance().getDefaultCPUTime() + ((new Random()).nextInt(10) * 900)
                 : GaswConfiguration.getInstance().getDefaultCPUTime();
@@ -99,14 +110,14 @@ public class DiracJdlGenerator {
         this.tags = "";
     }
 
-    public String generate(String scriptName, Map<String, String> envVariables) {
-
+    public String generate(String scriptName, Map<String, String> envVariables, boolean isMoteurLiteEnabled) {
         try {
             parseEnvironment(envVariables);
+    
             String jobName = scriptName.split("\\.")[0] + " - " + GaswConfiguration.getInstance().getSimulationID();
-
             VelocityUtil velocity = new VelocityUtil("vm/jdl/dirac-jdl.vm");
-
+    
+            // Add common variables to Velocity context
             velocity.put("jobName", jobName);
             velocity.put("scriptPath", scriptPath);
             velocity.put("scriptName", scriptName);
@@ -115,14 +126,26 @@ public class DiracJdlGenerator {
             velocity.put("site", site);
             velocity.put("bannedSite", bannedSites);
             velocity.put("tags", tags);
-
+    
+            // If MoteurLite is enabled, include these additional variables
+            if (isMoteurLiteEnabled) {
+                String invName = scriptName.replace(".sh", "") + "-invocation.json";
+                String configName = scriptName.replace(".sh", "") + "-configuration.sh";
+    
+                velocity.put("invName", invName);
+                velocity.put("configName", configName);
+                velocity.put("invPath", invPath);
+                velocity.put("configPath", configPath);
+                velocity.put("workflowFile", workflowFile);
+            }
+    
             String command = scriptName.replaceAll("(-[0-9]+.sh)$", "");
             if (!commandBannedSitesMap.containsKey(command)) {
-                commandBannedSitesMap.put(command,bannedSites);
+                commandBannedSitesMap.put(command, bannedSites);
             }
-
+    
             return velocity.merge().toString();
-
+    
         } catch (Exception ex) {
             logger.error(ex);
             return "";

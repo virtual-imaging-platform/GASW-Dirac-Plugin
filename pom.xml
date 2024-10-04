@@ -99,10 +99,9 @@
 
     <dependencies>
         <dependency>
-            <groupId>fr.insalyon.creatis</groupId>
-            <artifactId>gasw</artifactId>
-            <version>${gasw-version}</version>
-            <scope>provided</scope>
+            <groupId>com.github.sandepat</groupId>
+            <artifactId>GASW</artifactId>
+            <version>bba9775487</version>
         </dependency>
 
         <dependency>
@@ -118,6 +117,10 @@
             <id>creatis</id>
             <name>Creatis Insa Lyon repository [creatis]</name>
             <url>https://vip.creatis.insa-lyon.fr:9007/nexus/repository/public</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
         </repository>
     </repositories>
 
