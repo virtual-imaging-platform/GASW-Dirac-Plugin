@@ -32,18 +32,25 @@
  */
 package fr.insalyon.creatis.gasw.plugin.executor.dirac.execution;
 
-import fr.insalyon.creatis.gasw.*;
-import fr.insalyon.creatis.gasw.bean.Job;
-import fr.insalyon.creatis.gasw.dao.*;
-import fr.insalyon.creatis.gasw.execution.GaswSubmit;
-import fr.insalyon.creatis.gasw.plugin.ListenerPlugin;
-import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
-import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.DiracDAOFactory;
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.apache.log4j.Logger;
+
+import fr.insalyon.creatis.gasw.GaswConfiguration;
+import fr.insalyon.creatis.gasw.GaswConstants;
+import fr.insalyon.creatis.gasw.GaswException;
+import fr.insalyon.creatis.gasw.GaswInput;
+import fr.insalyon.creatis.gasw.GaswUtil;
+import fr.insalyon.creatis.gasw.bean.Job;
+import fr.insalyon.creatis.gasw.dao.DAOException;
+import fr.insalyon.creatis.gasw.dao.DAOFactory;
+import fr.insalyon.creatis.gasw.dao.JobDAO;
+import fr.insalyon.creatis.gasw.execution.GaswSubmit;
+import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
+import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.DiracDAOFactory;
 
 /**
  *
@@ -101,7 +108,11 @@ public class DiracSubmit extends GaswSubmit {
     private String generateJdl(String scriptName) throws GaswException {
 
         DiracJdlGenerator generator = DiracJdlGenerator.getInstance();
+        if (gaswInput.isMoteurLiteEnabled()) {
+        return publishJdl(scriptName, generator.generate(scriptName, gaswInput.getEnvVariables(),gaswInput.isMoteurLiteEnabled()));
+        } else {
         return publishJdl(scriptName, generator.generate(scriptName, gaswInput.getEnvVariables()));
+        }
     }
 
     /**

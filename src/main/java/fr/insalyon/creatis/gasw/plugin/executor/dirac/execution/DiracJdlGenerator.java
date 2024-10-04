@@ -84,11 +84,12 @@ public class DiracJdlGenerator {
     private DiracJdlGenerator() throws GaswException {
 
         DiracConfiguration conf = DiracConfiguration.getInstance();
+        GaswConfiguration gaswConf = GaswConfiguration.getInstance();
 
         this.scriptPath = new File(GaswConstants.SCRIPT_ROOT).getAbsolutePath();
         this.invPath = new File(GaswConstants.INVOCATION_DIR).getAbsolutePath();
         this.configPath = new File(GaswConstants.CONFIG_DIR).getAbsolutePath();
-        this.workflowFile = new File("workflow.json").getAbsolutePath();
+        this.workflowFile = new File(gaswConf.getBoutiquesFilename()).getAbsolutePath();
 
         this.cpuTime = conf.isBalanceEnabled()
                 ? GaswConfiguration.getInstance().getDefaultCPUTime() + ((new Random()).nextInt(10) * 900)
@@ -108,6 +109,36 @@ public class DiracJdlGenerator {
         this.commandBannedSitesMap = new HashMap<String, String>();
         this.commandFaultySitesMap = new HashMap<String, DiracFaultySites>();
         this.tags = "";
+    }
+
+    public String generate(String scriptName, Map<String, String> envVariables) {
+
+        try {
+            parseEnvironment(envVariables);
+            String jobName = scriptName.split("\\.")[0] + " - " + GaswConfiguration.getInstance().getSimulationID();
+
+            VelocityUtil velocity = new VelocityUtil("vm/jdl/dirac-jdl.vm");
+
+            velocity.put("jobName", jobName);
+            velocity.put("scriptPath", scriptPath);
+            velocity.put("scriptName", scriptName);
+            velocity.put("cpuTime", cpuTime);
+            velocity.put("priority", priority);
+            velocity.put("site", site);
+            velocity.put("bannedSite", bannedSites);
+            velocity.put("tags", tags);
+
+            String command = scriptName.replaceAll("(-[0-9]+.sh)$", "");
+            if (!commandBannedSitesMap.containsKey(command)) {
+                commandBannedSitesMap.put(command,bannedSites);
+            }
+
+            return velocity.merge().toString();
+
+        } catch (Exception ex) {
+            logger.error(ex);
+            return "";
+        }
     }
 
     public String generate(String scriptName, Map<String, String> envVariables, boolean isMoteurLiteEnabled) {
