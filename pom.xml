@@ -14,7 +14,7 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
 
-        <gasw-version>3.10.0</gasw-version>
+        <gasw-version>3.11.0-SNAPSHOT</gasw-version>
     </properties>
 
     <licenses>
@@ -99,9 +99,10 @@
 
     <dependencies>
         <dependency>
-            <groupId>com.github.sandepat</groupId>
-            <artifactId>GASW</artifactId>
-            <version>bba9775487</version>
+            <groupId>fr.insalyon.creatis</groupId>
+            <artifactId>gasw</artifactId>
+            <version>${gasw-version}</version>
+            <scope>provided</scope>
         </dependency>
 
         <dependency>
@@ -117,10 +118,6 @@
             <id>creatis</id>
             <name>Creatis Insa Lyon repository [creatis]</name>
             <url>https://vip.creatis.insa-lyon.fr:9007/nexus/repository/public</url>
-        </repository>
-        <repository>
-            <id>jitpack.io</id>
-            <url>https://jitpack.io</url>
         </repository>
     </repositories>
 

@@ -61,6 +61,7 @@ public class DiracJdlGenerator {
 
     private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
     private static DiracJdlGenerator instance;
+
     private String scriptPath;
     private int cpuTime;
     private int priority;
@@ -70,9 +71,6 @@ public class DiracJdlGenerator {
     private Map<String, String> commandBannedSitesMap;
     private Map<String, DiracFaultySites> commandFaultySitesMap;
     private String tags;
-    private String invPath;
-    private String configPath;
-    private String workflowFile;
 
     public static DiracJdlGenerator getInstance() throws GaswException {
         if (instance == null) {
@@ -84,12 +82,8 @@ public class DiracJdlGenerator {
     private DiracJdlGenerator() throws GaswException {
 
         DiracConfiguration conf = DiracConfiguration.getInstance();
-        GaswConfiguration gaswConf = GaswConfiguration.getInstance();
-
         this.scriptPath = new File(GaswConstants.SCRIPT_ROOT).getAbsolutePath();
-        this.invPath = new File(GaswConstants.INVOCATION_DIR).getAbsolutePath();
-        this.configPath = new File(GaswConstants.CONFIG_DIR).getAbsolutePath();
-        this.workflowFile = new File(gaswConf.getBoutiquesFilename()).getAbsolutePath();
+
 
         this.cpuTime = conf.isBalanceEnabled()
                 ? GaswConfiguration.getInstance().getDefaultCPUTime() + ((new Random()).nextInt(10) * 900)
@@ -132,7 +126,11 @@ public class DiracJdlGenerator {
 
 
             // If MoteurLite is enabled, include these additional variables
-            if (isMoteurliteEnabled) {
+            if (isMoteurliteEnabled) {        
+                String invPath = new File(GaswConstants.INVOCATION_DIR).getAbsolutePath();
+                String configPath = new File(GaswConstants.CONFIG_DIR).getAbsolutePath();
+                String workflowFile = new File(GaswConfiguration.getInstance().getBoutiquesFilename()).getAbsolutePath();
+
                 String invName = scriptName.replace(".sh", "") + "-invocation.json";
                 String configName = scriptName.replace(".sh", "") + "-configuration.sh";
 
