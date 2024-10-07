@@ -2,20 +2,23 @@
 ##
 ## Variables
 ## $jobName, $scriptPath, $scriptName, $cpuTime,
-## $priority, $site $bannedSite, $tags
+## $priority, $site, $bannedSite, $tags
 ##
 JobName         = "$jobName";
 Executable      = "$scriptName";
 StdOutput       = "std.out";
 StdError        = "std.err";
+#if($isMoteurliteEnabled)
+InputSandbox    = {"$scriptPath/$scriptName", "$invPath/$invName", "$configPath/$configName", "$workflowFile"};
+#else
 InputSandbox    = {"$scriptPath/$scriptName"};
+#end
 OutputSandbox   = {"std.out", "std.err", "${scriptName}.provenance.json"};
 CPUTime         = "$cpuTime";
 Priority        = $priority;
 Site            = "$site";
 BannedSite      = "$bannedSite";
 ## Following line checks that $tags is not null and not empty.
-## See https://wiki.apache.org/velocity/CheckingForNull
 #if ("$!tags" != "")
 Tags            = "$tags";
 #end

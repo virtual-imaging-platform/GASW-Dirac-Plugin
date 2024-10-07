@@ -1,15 +1,14 @@
 package fr.insalyon.creatis.gasw.plugin.executor.dirac.execution;
 
-import fr.insalyon.creatis.gasw.GaswException;
-import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
-import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConstants;
+import static org.junit.jupiter.api.Assertions.*;
+
 import java.io.IOException;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.Files;
 import java.nio.file.FileVisitResult;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -18,10 +17,10 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import fr.insalyon.creatis.gasw.GaswException;
+import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
+import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConstants;
 
 @DisplayName("Dirac JDL generation tests")
 public class DiracJdlGeneratorTest {
@@ -79,21 +78,66 @@ public class DiracJdlGeneratorTest {
         envVariables.put(DiracConstants.ENV_TAGS, "");
 
         // When
-        String result = generator.generate("scriptName", envVariables);
+        String result = generator.generate("scriptName.sh", envVariables, false);
 
         // Then
+        System.out.println(result);
         assertEquals(10, result.split("\n").length);
         assertTrue(result.contains("JobName         = \"scriptName - GASW-Dirac-Plugin\";"));
-        assertTrue(result.contains("Executable      = \"scriptName\";"));
+        assertTrue(result.contains("Executable      = \"scriptName.sh\";"));
         assertTrue(result.contains("StdOutput       = \"std.out\";"));
         assertTrue(result.contains("StdError        = \"std.err\";"));
         assertTrue(result.contains("InputSandbox    = {\""));
-        assertTrue(result.contains("OutputSandbox   = {\"std.out\", \"std.err\", \"scriptName.provenance.json\"};"));
+        assertTrue(result.contains("OutputSandbox   = {\"std.out\", \"std.err\", \"scriptName.sh.provenance.json\"};"));
         assertTrue(result.contains("CPUTime         = \"1800\";"));
         assertTrue(result.contains("Priority        = 0;"));
         assertTrue(result.contains("Site            = \"\";"));
         assertTrue(result.contains("BannedSite      = \"first.banned.site,second.banned.site\";"));
+
+        String inputsLine = result.lines().filter(l -> l.startsWith("InputSandbox")).findAny().get();
+        String[] inputs = inputsLine.split(",");
+        assertEquals(1, inputs.length);
+        assertTrue(inputs[0].endsWith("/sh/scriptName.sh\"};"));
     }
+
+    @Test
+    @DisplayName("Creation of JDL with MoteurLite")
+    public void creationJdlWithMoteurLite() throws GaswException {
+        // Given
+        DiracJdlGenerator generator = DiracJdlGenerator.getInstance();
+        Map<String, String> envVariables = new HashMap<>();
+        envVariables.put(DiracConstants.ENV_TAGS, "");
+        
+        // When
+        String result = generator.generate("scriptName.sh", envVariables, true);
+        
+        // Then
+        System.out.println(result);
+        // Check the common JDL components
+        assertEquals(10, result.split("\n").length);
+        assertTrue(result.contains("JobName         = \"scriptName - GASW-Dirac-Plugin\";"));
+        assertTrue(result.contains("Executable      = \"scriptName.sh\";"));
+        assertTrue(result.contains("StdOutput       = \"std.out\";"));
+        assertTrue(result.contains("StdError        = \"std.err\";"));
+        assertTrue(result.contains("InputSandbox    = {\""));
+        assertTrue(result.contains("OutputSandbox   = {\"std.out\", \"std.err\", \"scriptName.sh.provenance.json\"};"));
+        assertTrue(result.contains("CPUTime         = \"1800\";"));
+        assertTrue(result.contains("Priority        = 0;"));
+        assertTrue(result.contains("Site            = \"\";"));
+        assertTrue(result.contains("BannedSite      = \"first.banned.site,second.banned.site\";"));
+    
+        // Check MoteurLite-specific components
+        String inputsLine = result.lines().filter(l -> l.startsWith("InputSandbox")).findAny().get();
+        String[] inputs = inputsLine.split(",");
+        assertEquals(4, inputs.length);
+        assertTrue(inputs[0].endsWith("/sh/scriptName.sh\""));
+        assertTrue(inputs[1].endsWith("/inv/scriptName-invocation.json\""));
+        assertTrue(inputs[2].endsWith("/config/scriptName-configuration.sh\""));
+        System.out.println("inputs[3] :" + inputs[3]);
+        assertTrue(inputs[3].endsWith("/\"workflow.json\"\"};"));
+    }
+    
+
 
     @Test
     @DisplayName("Creation of JDL with a tag")
@@ -104,7 +148,7 @@ public class DiracJdlGeneratorTest {
         envVariables.put(DiracConstants.ENV_TAGS, "creatisGpu");
 
         // When
-        String result = generator.generate("scriptName", envVariables);
+        String result = generator.generate("scriptName", envVariables, false);
 
         // Then
         assertEquals(11, result.split("\n").length);
