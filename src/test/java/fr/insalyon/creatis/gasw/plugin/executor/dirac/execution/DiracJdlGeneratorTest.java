@@ -82,7 +82,7 @@ public class DiracJdlGeneratorTest {
 
         // Then
         System.out.println(result);
-        assertEquals(11, result.split("\n").length);
+        assertEquals(10, result.split("\n").length);
         assertTrue(result.contains("JobName         = \"scriptName - GASW-Dirac-Plugin\";"));
         assertTrue(result.contains("Executable      = \"scriptName.sh\";"));
         assertTrue(result.contains("StdOutput       = \"std.out\";"));
@@ -114,7 +114,7 @@ public class DiracJdlGeneratorTest {
         // Then
         System.out.println(result);
         // Check the common JDL components
-        assertEquals(11, result.split("\n").length);
+        assertEquals(10, result.split("\n").length);
         assertTrue(result.contains("JobName         = \"scriptName - GASW-Dirac-Plugin\";"));
         assertTrue(result.contains("Executable      = \"scriptName.sh\";"));
         assertTrue(result.contains("StdOutput       = \"std.out\";"));
@@ -151,7 +151,7 @@ public class DiracJdlGeneratorTest {
         String result = generator.generate("scriptName", envVariables, false);
 
         // Then
-        assertEquals(12, result.split("\n").length);
+        assertEquals(11, result.split("\n").length);
         assertTrue(result.contains("Tags            = \"creatisGpu\";"));
     }
 }

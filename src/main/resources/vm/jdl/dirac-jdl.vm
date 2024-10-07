@@ -18,7 +18,6 @@ CPUTime         = "$cpuTime";
 Priority        = $priority;
 Site            = "$site";
 BannedSite      = "$bannedSite";
-
 ## Following line checks that $tags is not null and not empty.
 #if ("$!tags" != "")
 Tags            = "$tags";
