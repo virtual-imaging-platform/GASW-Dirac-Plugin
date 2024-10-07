@@ -2,13 +2,17 @@
 ##
 ## Variables
 ## $jobName, $scriptPath, $scriptName, $cpuTime,
-## $priority, $site $bannedSite, $tags
+## $priority, $site, $bannedSite, $tags
 ##
 JobName         = "$jobName";
 Executable      = "$scriptName";
 StdOutput       = "std.out";
 StdError        = "std.err";
-InputSandbox    = {"$scriptPath/$scriptName", "$invPath/$invName","$configPath/$configName","$workflowFile"};
+InputSandbox    = {"$scriptPath/$scriptName"
+#if($isMoteurliteEnabled)
+, "$invPath/$invName", "$configPath/$configName", "$workflowFile"
+#end
+};
 OutputSandbox   = {"std.out", "std.err", "${scriptName}.provenance.json"};
 CPUTime         = "$cpuTime";
 Priority        = $priority;

@@ -108,11 +108,7 @@ public class DiracSubmit extends GaswSubmit {
     private String generateJdl(String scriptName) throws GaswException {
 
         DiracJdlGenerator generator = DiracJdlGenerator.getInstance();
-        if (gaswInput.isMoteurLiteEnabled()) {
-        return publishJdl(scriptName, generator.generate(scriptName, gaswInput.getEnvVariables(),gaswInput.isMoteurLiteEnabled()));
-        } else {
-        return publishJdl(scriptName, generator.generate(scriptName, gaswInput.getEnvVariables()));
-        }
+        return publishJdl(scriptName, generator.generate(scriptName, gaswInput.getEnvVariables(), gaswInput.isMoteurLiteEnabled()));
     }
 
     /**
