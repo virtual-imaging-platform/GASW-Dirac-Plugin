@@ -134,7 +134,7 @@ public class DiracJdlGeneratorTest {
         assertTrue(inputs[1].endsWith("/inv/scriptName-invocation.json\""));
         assertTrue(inputs[2].endsWith("/config/scriptName-configuration.sh\""));
         System.out.println("inputs[3] :" + inputs[3]);
-        assertTrue(inputs[3].endsWith("/\"workflow.json\"\"};"));
+        assertTrue(inputs[3].endsWith("/workflow.json\"};"));
     }
     
 
