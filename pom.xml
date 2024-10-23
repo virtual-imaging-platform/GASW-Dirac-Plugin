@@ -4,7 +4,7 @@
 
     <groupId>fr.insalyon.creatis</groupId>
     <artifactId>gasw-dirac-plugin</artifactId>
-    <version>3.11.0-SNAPSHOT</version>
+    <version>3.11.0</version>
     <packaging>jar</packaging>
 
     <name>GASW-Dirac-Plugin</name>
@@ -14,7 +14,7 @@
         <maven.compiler.source>11</maven.compiler.source>
         <maven.compiler.target>11</maven.compiler.target>
 
-        <gasw-version>3.11.0-SNAPSHOT</gasw-version>
+        <gasw-version>3.11.0</gasw-version>
     </properties>
 
     <licenses>
