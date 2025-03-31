@@ -58,7 +58,6 @@ public class DiracMonitor extends GaswMonitor {
     private boolean stop;
 
     public synchronized static DiracMonitor getInstance() throws GaswException {
-
         if (instance == null) {
             instance = new DiracMonitor();
             instance.start();
@@ -67,7 +66,6 @@ public class DiracMonitor extends GaswMonitor {
     }
 
     private DiracMonitor() throws GaswException {
-
         super();
         stop = false;
         if (GaswConfiguration.getInstance().isMinorStatusEnabled()) {
@@ -108,7 +106,6 @@ public class DiracMonitor extends GaswMonitor {
                     while ((s = br.readLine()) != null) {
 
                         if (s.contains("JobID=")) {
-
                             cout.append(s).append("\n");
 
                             Map<JobInfoType, String> jobInfos = getJobInfos(s);
@@ -141,14 +138,9 @@ public class DiracMonitor extends GaswMonitor {
                                             " but has not been properly killed");
                                     job.setStatus(GaswStatus.KILL_REPLICA);
                                     updateStatus(job);
-                                    if (status.canBeKilled()) {
-                                        killRunnnigJob(job);
-                                    } else {
-                                        kill(job);
-                                    }
+                                    kill(job);
                                 }
                             } else if (status == DiracStatus.Running && job.getStatus() != GaswStatus.RUNNING) {
-
                                 job.setStatus(GaswStatus.RUNNING);
                                 // in case of job just replicated (so in SUCCESSFULLY_SUBMITTED
                                 // status), do not erase original (and real) download date
@@ -158,18 +150,15 @@ public class DiracMonitor extends GaswMonitor {
                                 updateStatus(job);
 
                             } else if (status == DiracStatus.Waiting && job.getStatus() != GaswStatus.QUEUED) {
-
                                 job.setStatus(GaswStatus.QUEUED);
                                 job.setQueued(new Date());
                                 updateStatus(job);
 
                             } else if (status == DiracStatus.Received && job.getStatus() != GaswStatus.SUCCESSFULLY_SUBMITTED) {
-
                                 job.setStatus(GaswStatus.SUCCESSFULLY_SUBMITTED);
                                 updateStatus(job);
 
                             } else {
-
                                 boolean finished = true;
 
                                 switch (status) {
@@ -313,17 +302,13 @@ public class DiracMonitor extends GaswMonitor {
 
     @Override
     protected void kill(Job job) {
-        this.kill(job, false);
-    }
-
-    protected void killRunnnigJob(Job job) {
-        this.kill(job, true);
-    }
-
-    protected void kill(Job job, boolean isRunning) {
+        // We decided to only keep GaswStatus.DELETED instead of GaswStatus.CANCELLED,
+        // because now the command "dirac-wms-job-delete"
+        // works for both queued and running jobs.
         Process process = null;
+
         try {
-            String command = isRunning  ? "dirac-wms-job-kill" : "dirac-wms-job-delete";
+            String command = "dirac-wms-job-delete";
             process = GaswUtil.getProcess(logger, command, job.getId());
             process.waitFor();
 
@@ -339,27 +324,23 @@ public class DiracMonitor extends GaswMonitor {
                 logger.error("Error using " + command + " on job " + job.getId());
                 logger.error(cout);
             } else {
-                logger.info( (isRunning ? "Killed" : "Deleted") + " DIRAC Job ID '" + job.getId()  + "' (current status : " + job.getStatus() + ")");
+                logger.info("Deleted DIRAC Job ID '" + job.getId()  + "' (current status : " + job.getStatus() + ")");
                 // update status to set a final one : CANCELLED or DELETED, with an optional _REPLICA suffix
                 // at the beginning, status should be KILL or KILL_REPLICA, but we keep support if it was already a final one
                 switch (job.getStatus()) {
                     case KILL_REPLICA:
-                        job.setStatus(isRunning ? GaswStatus.CANCELLED_REPLICA : GaswStatus.DELETED_REPLICA);
+                        job.setStatus(GaswStatus.DELETED_REPLICA);
                         break;
                     case KILL:
-                        job.setStatus(isRunning ? GaswStatus.CANCELLED : GaswStatus.DELETED);
+                        job.setStatus(GaswStatus.DELETED);
                         break;
                     case CANCELLED:
                         logger.warn("A canceled job should not have a kill request");
-                        if ( ! isRunning) {
-                            job.setStatus(GaswStatus.DELETED);
-                        }
+                        job.setStatus(GaswStatus.DELETED);
                         break;
                     case CANCELLED_REPLICA:
                         logger.warn("A canceled job should not have a kill request");
-                        if ( ! isRunning) {
-                            job.setStatus(GaswStatus.DELETED_REPLICA);
-                        }
+                        job.setStatus(GaswStatus.DELETED_REPLICA);
                         break;
                     case DELETED:
                     case DELETED_REPLICA:
@@ -367,7 +348,6 @@ public class DiracMonitor extends GaswMonitor {
                         logger.error("Wrong job status to have a kill request " + job.getStatus());
                         break;
                 }
-
                 updateStatus(job);
 
                 if (GaswStatus.CANCELLED.equals(job.getStatus()) || GaswStatus.DELETED.equals(job.getStatus())) {
@@ -391,8 +371,8 @@ public class DiracMonitor extends GaswMonitor {
 
     @Override
     protected void reschedule(Job job) {
-
         Process process = null;
+
         try {
             process = GaswUtil.getProcess(logger, "dirac-wms-job-reschedule", job.getId());
             process.waitFor();
@@ -425,7 +405,6 @@ public class DiracMonitor extends GaswMonitor {
 
     @Override
     protected void replicate(Job job) {
-
         try {
             logger.info("Replicating: " + job.getId() + " - " + job.getFileName());
             DiracDAOFactory.getInstance().getJobPoolDAO().add(
@@ -448,18 +427,13 @@ public class DiracMonitor extends GaswMonitor {
 
     @Override
     protected void killReplicas(Job job) {
-
         try {
             for (Job j : jobDAO.getActiveJobsByInvocationID(job.getInvocationID())) {
                 logger.info("Killing replica: " + j.getId() + " - " + j.getFileName());
-                boolean isRunning = ( GaswStatus.RUNNING == j.getStatus() );
+
                 j.setStatus(GaswStatus.KILL_REPLICA);
                 jobDAO.update(job);
-                if (isRunning) {
-                    kill(j);
-                } else {
-                    killRunnnigJob(j);
-                }
+                kill(j);
             }
 
         } catch (DAOException ex) {
@@ -469,7 +443,6 @@ public class DiracMonitor extends GaswMonitor {
 
     @Override
     protected void resume(Job job) {
-
         try {
             logger.info("Resuming: " + job.getId() + " - " + job.getFileName());
             DiracDAOFactory.getInstance().getJobPoolDAO().add(
@@ -481,23 +454,10 @@ public class DiracMonitor extends GaswMonitor {
     }
 
     protected void finaliseReplicaJob(Job job) {
-
-        try {
-            job.setEnd(new Date());
+        try { 
             DAOFactory factory = DAOFactory.getDAOFactory();
-
-            for (JobMinorStatus minorStatus : factory.getJobMinorStatusDAO().getExecutionMinorStatus(job.getId())) {
-
-                switch (minorStatus.getStatus()) {
-
-                    case Application:
-                        job.setRunning(minorStatus.getDate());
-                        break;
-                    case Outputs:
-                        job.setUpload(minorStatus.getDate());
-                        break;
-                }
-            }
+            
+            job.setEnd(new Date());
             job.setExitCode(GaswExitCode.EXECUTION_CANCELED.getExitCode());
             factory.getJobDAO().update(job);
 
@@ -512,8 +472,8 @@ public class DiracMonitor extends GaswMonitor {
      * @throws GaswException
      */
     public synchronized void terminate() throws GaswException {
-
         stop = true;
+
         if (DiracConfiguration.getInstance().isNotificationEnabled()) {
             DiracMinorStatusServiceMonitor.getInstance().terminate();
         }
