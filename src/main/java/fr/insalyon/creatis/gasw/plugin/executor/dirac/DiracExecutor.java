@@ -34,11 +34,14 @@ package fr.insalyon.creatis.gasw.plugin.executor.dirac;
 
 import fr.insalyon.creatis.gasw.GaswException;
 import fr.insalyon.creatis.gasw.GaswInput;
+import fr.insalyon.creatis.gasw.GaswUtil;
 import fr.insalyon.creatis.gasw.plugin.ExecutorPlugin;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracMinorStatusServiceGenerator;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracMonitor;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracSubmit;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
@@ -62,34 +65,53 @@ public class DiracExecutor implements ExecutorPlugin {
 
     @Override
     public void load(GaswInput gaswInput) throws GaswException {
+        checkDiracAvailable();
 
         // fetch version from maven generated file
         logger.info("Loading Dirac GASW Plugin version "
                 + getClass().getPackage().getImplementationVersion());
 
         DiracConfiguration.getInstance();
-        diracSubmit = new DiracSubmit(gaswInput,  
-                DiracMinorStatusServiceGenerator.getInstance());
+        diracSubmit = new DiracSubmit(gaswInput, DiracMinorStatusServiceGenerator.getInstance());
     }
 
     @Override
     public List<Class> getPersistentClasses() throws GaswException {
-        
-        List<Class> list = new ArrayList<Class>();
+        List<Class> list = new ArrayList<>();
+
         list.add(JobPool.class);
         return list;
     }
 
     @Override
     public String submit() throws GaswException {
-
         return diracSubmit.submit();
     }
 
     @Override
     public void terminate() throws GaswException {
-
         DiracSubmit.terminate();
         DiracMonitor.getInstance().terminate();
+    }
+
+    public void checkDiracAvailable() throws GaswException {
+        String command = "dirac-version";
+        Process process;
+
+        try {
+            process = GaswUtil.getProcess(logger, command);
+            process.waitFor();
+
+            switch (process.exitValue()) {
+                case 0:
+                    return;
+                case 127:
+                    throw new GaswException("Dirac isn't available in environnement!");
+                default:
+                    throw new GaswException("Dirac doesn't seems to work very well!");
+            }
+        } catch (IOException | InterruptedException e) {
+            throw new GaswException("Failed to check if dirac was present!");
+        }
     }
 }
