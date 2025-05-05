@@ -329,7 +329,7 @@ public class DiracMonitor extends GaswMonitor {
             } else {
                 for (Job job: jobs) {
                     logger.info("Deleted DIRAC Job ID '" + job.getId()  + "' (current status : " + job.getStatus() + ")");
-                    // update status to set a final one : CANCELLED or DELETED, with an optional _REPLICA suffix
+                    // update status to set a final one : DELETED, with an optional _REPLICA suffix
                     // at the beginning, status should be KILL or KILL_REPLICA, but we keep support if it was already a final one
                     switch (job.getStatus()) {
                         case KILL_REPLICA:
@@ -338,16 +338,6 @@ public class DiracMonitor extends GaswMonitor {
                         case KILL:
                             job.setStatus(GaswStatus.DELETED);
                             break;
-                        case CANCELLED:
-                            logger.warn("A canceled job should not have a kill request");
-                            job.setStatus(GaswStatus.DELETED);
-                            break;
-                        case CANCELLED_REPLICA:
-                            logger.warn("A canceled job should not have a kill request");
-                            job.setStatus(GaswStatus.DELETED_REPLICA);
-                            break;
-                        case DELETED:
-                        case DELETED_REPLICA:
                         default:
                             job.setStatus(GaswStatus.DELETED);
                             logger.error("Wrong job status to have a kill request." + job.getStatus());
