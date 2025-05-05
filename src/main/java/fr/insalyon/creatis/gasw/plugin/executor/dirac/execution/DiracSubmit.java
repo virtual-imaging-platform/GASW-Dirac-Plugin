@@ -168,6 +168,7 @@ public class DiracSubmit extends GaswSubmit {
                     logger.error("[DIRAC] error submitting DIRAC jobs", ex);
                 } catch (InterruptedException ex) {
                     logger.error("[DIRAC] jobs submitting thread interrupted" + ex);
+                    break;
                 } finally {
                     closeProcess(process);
                 }

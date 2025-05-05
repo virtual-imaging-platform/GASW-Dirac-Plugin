@@ -219,6 +219,7 @@ public class DiracMonitor extends GaswMonitor {
             } catch (InterruptedException ex) {
                 logger.error("[DIRAC] jobs monitoring thread interrupted" + ex);
                 terminate();
+                break;
             } finally {
                 closeProcess(process);
             }
@@ -348,12 +349,14 @@ public class DiracMonitor extends GaswMonitor {
                         case DELETED:
                         case DELETED_REPLICA:
                         default:
-                            logger.error("Wrong job status to have a kill request " + job.getStatus());
+                            job.setStatus(GaswStatus.DELETED);
+                            logger.error("Wrong job status to have a kill request." + job.getStatus());
+                            logger.warn("Job set to default status DELETED.");
                             break;
                     }
                     updateStatus(job);
     
-                    if (GaswStatus.CANCELLED.equals(job.getStatus()) || GaswStatus.DELETED.equals(job.getStatus())) {
+                    if (GaswStatus.DELETED.equals(job.getStatus())) {
                         // invocation is over, inform moteur and listeners
                         new DiracOutputParser(job.getId()).start();
                     } else {
