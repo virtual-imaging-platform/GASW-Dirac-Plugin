@@ -63,7 +63,6 @@ public class DiracConfiguration {
     private List<Object> siteNamesToIgnore;
 
     public static DiracConfiguration getInstance() throws GaswException {
-
         if (instance == null) {
             instance = new DiracConfiguration();
         }

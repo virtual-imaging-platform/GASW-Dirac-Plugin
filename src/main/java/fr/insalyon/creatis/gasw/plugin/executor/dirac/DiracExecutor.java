@@ -47,10 +47,6 @@ import java.util.List;
 import net.xeoh.plugins.base.annotations.PluginImplementation;
 import org.apache.log4j.Logger;
 
-/**
- *
- * @author Rafael Ferreira da Silva
- */
 @PluginImplementation
 public class DiracExecutor implements ExecutorPlugin {
 
@@ -90,8 +86,15 @@ public class DiracExecutor implements ExecutorPlugin {
 
     @Override
     public void terminate() throws GaswException {
-        DiracSubmit.terminate();
-        DiracMonitor.getInstance().terminate();
+        DiracMonitor monitor = DiracMonitor.getInstance();
+
+        try {
+            diracSubmit.terminate();
+            monitor.interrupt();
+            monitor.join();
+        } catch (InterruptedException e) {
+            logger.warn("Hard-kill occured!");
+        }
     }
 
     public void checkDiracAvailable() throws GaswException {
