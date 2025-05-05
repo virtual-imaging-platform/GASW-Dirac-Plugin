@@ -340,7 +340,7 @@ public class DiracMonitor extends GaswMonitor {
                             break;
                         default:
                             job.setStatus(GaswStatus.DELETED);
-                            logger.error("Wrong job status to have a kill request." + job.getStatus());
+                            logger.warn("Wrong job status to have a kill request." + job.getStatus());
                             logger.warn("Job set to default status DELETED.");
                             break;
                     }
