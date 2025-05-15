@@ -86,12 +86,9 @@ public class DiracExecutor implements ExecutorPlugin {
 
     @Override
     public void terminate() throws GaswException {
-        DiracMonitor monitor = DiracMonitor.getInstance();
-
         try {
             DiracSubmit.terminate();
-            monitor.interrupt();
-            monitor.join();
+            DiracMonitor.terminate();
         } catch (InterruptedException e) {
             logger.warn("Hard-kill occured!");
         }

@@ -218,7 +218,7 @@ public class DiracMonitor extends GaswMonitor {
                 logger.error("[DIRAC] error monitoring DIRAC jobs", ex);
             } catch (InterruptedException ex) {
                 logger.error("[DIRAC] jobs monitoring thread interrupted" + ex);
-                terminate();
+                killActiveJobs();
                 break;
             } finally {
                 closeProcess(process);
@@ -464,7 +464,7 @@ public class DiracMonitor extends GaswMonitor {
         }
     }
 
-    private void terminate() {
+    private void killActiveJobs() {
         List<Job> jobs = new ArrayList<>();
 
         // kill jobs that are still running (context of soft-kill)
@@ -494,5 +494,12 @@ public class DiracMonitor extends GaswMonitor {
             }
         }
         process = null;
+    }
+
+    public static void terminate() throws InterruptedException {
+        if (instance != null) {
+            instance.interrupt();
+            instance.join();
+        }
     }
 }
