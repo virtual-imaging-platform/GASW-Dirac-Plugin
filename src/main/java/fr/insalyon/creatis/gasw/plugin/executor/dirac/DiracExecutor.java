@@ -89,7 +89,7 @@ public class DiracExecutor implements ExecutorPlugin {
         DiracMonitor monitor = DiracMonitor.getInstance();
 
         try {
-            diracSubmit.terminate();
+            DiracSubmit.terminate();
             monitor.interrupt();
             monitor.join();
         } catch (InterruptedException e) {

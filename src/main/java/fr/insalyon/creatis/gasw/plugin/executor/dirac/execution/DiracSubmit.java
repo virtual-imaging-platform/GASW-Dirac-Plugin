@@ -55,7 +55,7 @@ import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.DiracDAOFactory;
 public class DiracSubmit extends GaswSubmit {
 
     private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
-    private SubmitPool submitPool;
+    private static SubmitPool submitPool;
 
     public DiracSubmit(GaswInput gaswInput,
             DiracMinorStatusServiceGenerator minorStatusServiceGenerator) throws GaswException {
@@ -63,6 +63,7 @@ public class DiracSubmit extends GaswSubmit {
         super(gaswInput, minorStatusServiceGenerator);
 
         if (submitPool == null || submitPool.isInterrupted() || !submitPool.isAlive()) {
+            logger.info("Starting new SubmitPool");
             submitPool = new SubmitPool();
             submitPool.start();
         }
@@ -194,7 +195,7 @@ public class DiracSubmit extends GaswSubmit {
         }
     }
 
-    public void terminate() throws InterruptedException {
+    public static void terminate() throws InterruptedException {
         if (submitPool != null) {
             submitPool.interrupt();
             submitPool.join();
