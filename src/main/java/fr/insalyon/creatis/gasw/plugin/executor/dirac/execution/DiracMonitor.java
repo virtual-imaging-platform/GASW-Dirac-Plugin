@@ -89,7 +89,7 @@ public class DiracMonitor extends GaswMonitor {
                         command.add(job.getId());
                     }
 
-                    process = GaswUtil.getProcess(logger, command.toArray(new String[]{}));
+                    process = DiracProcessUtils.getDiracProcess(logger, command.toArray(new String[]{}));
 
                     BufferedReader br = GaswUtil.getBufferedReader(process);
 
@@ -312,7 +312,7 @@ public class DiracMonitor extends GaswMonitor {
 
         try {
             String command = "dirac-wms-job-delete";
-            process = GaswUtil.getProcess(logger, command, jobsIds);
+            process = DiracProcessUtils.getDiracProcess(logger, command, jobsIds);
             process.waitFor();
 
             BufferedReader br = GaswUtil.getBufferedReader(process);
@@ -372,7 +372,7 @@ public class DiracMonitor extends GaswMonitor {
         Process process = null;
 
         try {
-            process = GaswUtil.getProcess(logger, "dirac-wms-job-reschedule", job.getId());
+            process = DiracProcessUtils.getDiracProcess(logger, "dirac-wms-job-reschedule", job.getId());
             process.waitFor();
 
             BufferedReader br = GaswUtil.getBufferedReader(process);
@@ -392,7 +392,7 @@ public class DiracMonitor extends GaswMonitor {
                 jobDAO.update(job);
                 logger.info("Rescheduled DIRAC Job ID '" + job.getId() + "'.");
             }
-        } catch (IOException | DAOException ex) {
+        } catch (GaswException | IOException | DAOException ex) {
             logger.error("[DIRAC] error rescheduling job " + job.getId(), ex);
         } catch (InterruptedException ex) {
             logger.error("[DIRAC] job rescheduling thread interrupted" + ex);

@@ -121,7 +121,7 @@ public class DiracSubmit extends GaswSubmit {
                             command.add(GaswConstants.JDL_ROOT + "/" + job.getFileName() + ".jdl");
                         }
 
-                        process = GaswUtil.getProcess(logger, command.toArray(new String[]{}));
+                        process = DiracProcessUtils.getDiracProcess(logger, command.toArray(new String[]{}));
 
                         BufferedReader br = GaswUtil.getBufferedReader(process);
                         String cout = "";
