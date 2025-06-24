@@ -52,6 +52,7 @@ public class DiracConstants {
     public static final String LAB_CONF_BANNED_SITES = "plugin.dirac.conf.sites.banned";
     public static final String LAB_CONF_DYNAMIC_BAN_ENABLED = "plugin.dirac.conf.sites.dynamic-ban.enabled";
     public static final String LAB_CONF_SITE_NAMES_TO_IGNORE = "plugin.dirac.conf.sites.ignored";
+    public static final String LAB_CONF_DIRACOSRC_FILEPATH = "plugin.dirac.conf.diracosrc.filepath";
     // Environment Variables
     public static final String ENV_BANNED_SITE = "diracBannedSite";
     public static final String ENV_MAX_CPU_TIME = "diracMaxCPUTime";

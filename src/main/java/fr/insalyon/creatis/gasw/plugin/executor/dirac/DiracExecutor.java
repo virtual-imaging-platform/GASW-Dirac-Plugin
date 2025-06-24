@@ -39,6 +39,7 @@ import fr.insalyon.creatis.gasw.plugin.ExecutorPlugin;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracMinorStatusServiceGenerator;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracMonitor;
+import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracProcessUtils;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracSubmit;
 
 import java.io.IOException;
@@ -99,7 +100,7 @@ public class DiracExecutor implements ExecutorPlugin {
         Process process;
 
         try {
-            process = GaswUtil.getProcess(logger, command);
+            process = DiracProcessUtils.getDiracProcess(logger, command);
             process.waitFor();
 
             switch (process.exitValue()) {
