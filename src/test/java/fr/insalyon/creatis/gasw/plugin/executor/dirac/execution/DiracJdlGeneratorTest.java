@@ -38,7 +38,8 @@ public class DiracJdlGeneratorTest {
             Arrays.asList("first.banned.site", "second.banned.site"),
             Arrays.asList("Any", "Multiple"),
             Arrays.asList("Strasbourg"),
-            Arrays.asList());
+            Arrays.asList(),
+            "/test/path/to/diracosrc");
     }
 
     @AfterAll

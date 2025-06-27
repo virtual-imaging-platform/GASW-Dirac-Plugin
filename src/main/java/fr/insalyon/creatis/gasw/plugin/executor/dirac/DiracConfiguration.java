@@ -58,6 +58,7 @@ public class DiracConfiguration {
     private List<Object> siteNamesToIgnore;
     private List<Object> siteNames;
     private List<Object> tags;
+    private String diracosrcPath;
 
     public static DiracConfiguration getInstance() throws GaswException {
         if (instance == null) {
@@ -80,7 +81,8 @@ public class DiracConfiguration {
         List<Object> bannedSites,
         List<Object> namesToIgnore,
         List<Object> siteNames,
-        List<Object> tags) {
+        List<Object> tags,
+        String diracosrcPath) {
 
         instance = new DiracConfiguration(
             host,
@@ -96,7 +98,8 @@ public class DiracConfiguration {
             bannedSites,
             namesToIgnore,
             siteNames,
-            tags);
+            tags,
+            diracosrcPath);
     }
 
     private DiracConfiguration(
@@ -113,7 +116,8 @@ public class DiracConfiguration {
         List<Object> bannedSites,
         List<Object> namesToIgnore,
         List<Object> siteNames,
-        List<Object> tags) {
+        List<Object> tags,
+        String diracosrcPath) {
 
         this.host = host;
         this.defaultPool = defaultPool;
@@ -129,6 +133,7 @@ public class DiracConfiguration {
         this.siteNamesToIgnore = namesToIgnore;
         this.siteNames = siteNames;
         this.tags = tags;
+        this.diracosrcPath = diracosrcPath;
     }
 
     private DiracConfiguration() throws GaswException {
@@ -150,6 +155,7 @@ public class DiracConfiguration {
             siteNamesToIgnore = config.getList(DiracConstants.LAB_CONF_SITE_NAMES_TO_IGNORE, Arrays.asList("Any", "Multiple"));
             siteNames = config.getList(DiracConstants.LAB_CONF_SITE_NAMES, Arrays.asList());
             tags = config.getList(DiracConstants.LAB_TAGS, Arrays.asList());
+            diracosrcPath = config.getString(DiracConstants.LAB_CONF_DIRACOSRC_FILEPATH, "/vip/dirac/diracos/diracosrc");
 
             config.setProperty(DiracConstants.LAB_HOST, host);
             config.setProperty(DiracConstants.LAB_DEFAULT_POOL, defaultPool);
@@ -165,6 +171,7 @@ public class DiracConfiguration {
             config.setProperty(DiracConstants.LAB_CONF_SITE_NAMES_TO_IGNORE, siteNamesToIgnore);
             config.setProperty(DiracConstants.LAB_CONF_SITE_NAMES, siteNames);
             config.setProperty(DiracConstants.LAB_TAGS, tags);
+            config.setProperty(DiracConstants.LAB_CONF_DIRACOSRC_FILEPATH, diracosrcPath);
 
             config.save();
 
@@ -228,4 +235,9 @@ public class DiracConfiguration {
     public List<String> getTags() {
         return tags.stream().map((obj) -> (String) obj).toList();
     }
+
+    public String getDiracosrcPath() {
+        return diracosrcPath;
+    }
+
 }

@@ -130,7 +130,7 @@ public class DiracOutputParser extends GaswOutputParser {
     private GaswExitCode getAndParseDiracOutputFiles() throws GaswException {
         Process process = null;
         try {
-            process = GaswUtil.getProcess(logger, "dirac-wms-job-get-output", job.getId());
+            process = DiracProcessUtils.getDiracProcess(logger, "dirac-wms-job-get-output", job.getId());
             process.waitFor();
 
             if (process.exitValue() != 0) {
