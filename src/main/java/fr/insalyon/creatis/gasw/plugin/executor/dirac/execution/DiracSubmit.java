@@ -96,7 +96,7 @@ public class DiracSubmit extends GaswSubmit {
     private String generateJdl(String scriptName) throws GaswException {
 
         DiracJdlGenerator generator = DiracJdlGenerator.getInstance();
-        return publishJdl(scriptName, generator.generate(scriptName, gaswInput.getEnvVariables(), gaswInput.isMoteurLiteEnabled()));
+        return publishJdl(scriptName, generator.generate(scriptName));
     }
 
     /**
