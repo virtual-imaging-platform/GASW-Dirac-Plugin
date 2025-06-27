@@ -50,7 +50,6 @@ import fr.insalyon.creatis.gasw.GaswConfiguration;
 import fr.insalyon.creatis.gasw.GaswConstants;
 import fr.insalyon.creatis.gasw.GaswException;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
-import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConstants;
 import fr.insalyon.creatis.gasw.util.VelocityUtil;
 
 /**
@@ -80,35 +79,25 @@ public class DiracJdlGenerator {
     }
 
     private DiracJdlGenerator() throws GaswException {
-
         DiracConfiguration conf = DiracConfiguration.getInstance();
-        this.scriptPath = new File(GaswConstants.SCRIPT_ROOT).getAbsolutePath();
 
-
-        this.cpuTime = conf.isBalanceEnabled()
+        scriptPath = new File(GaswConstants.SCRIPT_ROOT).getAbsolutePath();
+        cpuTime = conf.isBalanceEnabled()
                 ? GaswConfiguration.getInstance().getDefaultCPUTime() + ((new Random()).nextInt(10) * 900)
                 : GaswConfiguration.getInstance().getDefaultCPUTime();
-        this.priority = conf.getDefaultPriority();
-        this.site = "";
-        this.defaultBannedSites = "";
-        StringBuilder bannedSitesBuilder = new StringBuilder();
-        for (String bSite : DiracConfiguration.getInstance().getBannedSites()) {
-            if (bannedSitesBuilder.length() > 0) {
-                bannedSitesBuilder.append(",");
-            }
-            bannedSitesBuilder.append(bSite);
-        }
-        this.defaultBannedSites = bannedSitesBuilder.toString();
-        this.bannedSites = this.defaultBannedSites;
-        this.commandBannedSitesMap = new HashMap<>();
-        this.commandFaultySitesMap = new HashMap<>();
-        this.tags = "";
+        priority = conf.getDefaultPriority();
+        site = String.join(",", conf.getSites());
+        defaultBannedSites = "";
+        defaultBannedSites = String.join(",", conf.getBannedSites());
+        bannedSites = this.defaultBannedSites;
+        commandBannedSitesMap = new HashMap<>();
+        commandFaultySitesMap = new HashMap<>();
+        tags = String.join(",", conf.getTags());
     }
 
-    public String generate(String scriptName, Map<String, String> envVariables, Boolean isMoteurliteEnabled) {
+    public String generate(String scriptName) {
 
         try {
-            parseEnvironment(envVariables);
             String jobName = scriptName.split("\\.")[0] + " - " + GaswConfiguration.getInstance().getSimulationID();
 
             VelocityUtil velocity = new VelocityUtil("vm/jdl/dirac-jdl.vm");
@@ -122,24 +111,19 @@ public class DiracJdlGenerator {
             velocity.put("site", site);
             velocity.put("bannedSite", bannedSites);
             velocity.put("tags", tags);
-            velocity.put("isMoteurliteEnabled", isMoteurliteEnabled);
 
+            // since MoteurLite, include these additional variables    
+            String invPath = new File(GaswConstants.INVOCATION_DIR).getAbsolutePath();
+            String configPath = new File(GaswConstants.CONFIG_DIR).getAbsolutePath();
+            String workflowFile = new File(GaswConfiguration.getInstance().getBoutiquesFilename()).getAbsolutePath();
+            String invName = scriptName.replace(".sh", "") + "-invocation.json";
+            String configName = scriptName.replace(".sh", "") + "-configuration.sh";
 
-            // If MoteurLite is enabled, include these additional variables
-            if (isMoteurliteEnabled) {        
-                String invPath = new File(GaswConstants.INVOCATION_DIR).getAbsolutePath();
-                String configPath = new File(GaswConstants.CONFIG_DIR).getAbsolutePath();
-                String workflowFile = new File(GaswConfiguration.getInstance().getBoutiquesFilename()).getAbsolutePath();
-
-                String invName = scriptName.replace(".sh", "") + "-invocation.json";
-                String configName = scriptName.replace(".sh", "") + "-configuration.sh";
-
-                velocity.put("invName", invName);
-                velocity.put("configName", configName);
-                velocity.put("invPath", invPath);
-                velocity.put("configPath", configPath);
-                velocity.put("workflowFile", workflowFile);
-            }
+            velocity.put("invName", invName);
+            velocity.put("configName", configName);
+            velocity.put("invPath", invPath);
+            velocity.put("configPath", configPath);
+            velocity.put("workflowFile", workflowFile);
 
             String command = scriptName.replaceAll("(-[0-9]+.sh)$", "");
             if (!commandBannedSitesMap.containsKey(command)) {
@@ -152,36 +136,6 @@ public class DiracJdlGenerator {
             logger.error(ex);
             return "";
         }
-    }
-
-    /**
-     * Parses a list of environment variables.
-     *
-     * @param envVariables
-     */
-    private void parseEnvironment(Map<String, String> envVariables) {
-
-        if (envVariables.containsKey(DiracConstants.ENV_PRIORITY)) {
-            priority = Integer.parseInt(envVariables.get(DiracConstants.ENV_PRIORITY));
-        }
-
-        if (envVariables.containsKey(DiracConstants.ENV_MAX_CPU_TIME)) {
-            cpuTime = Integer.parseInt(envVariables.get(DiracConstants.ENV_MAX_CPU_TIME));
-        }
-
-        if (envVariables.containsKey(DiracConstants.ENV_SITE)) {
-            site = envVariables.get(DiracConstants.ENV_SITE);
-        }
-
-        if (envVariables.containsKey(DiracConstants.ENV_BANNED_SITE)) {
-            if (defaultBannedSites.isEmpty()) {
-                bannedSites = envVariables.get(DiracConstants.ENV_BANNED_SITE);
-            } else {
-                bannedSites = this.defaultBannedSites + "," + envVariables.get(DiracConstants.ENV_BANNED_SITE);
-            }
-        }
-
-        tags = envVariables.getOrDefault(DiracConstants.ENV_TAGS, tags);
     }
 
     private void replaceLineInJdl(String jdlFile, String keyword, String replacement) {

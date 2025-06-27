@@ -52,25 +52,18 @@ import fr.insalyon.creatis.gasw.execution.GaswSubmit;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.DiracDAOFactory;
 
-/**
- *
- * @author Rafael Ferreira da Silva
- */
 public class DiracSubmit extends GaswSubmit {
 
     private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
-    private volatile static SubmitPool submitPool;
+    private static SubmitPool submitPool;
 
-    /**
-     *
-     * @param gaswInput
-     */
     public DiracSubmit(GaswInput gaswInput,
             DiracMinorStatusServiceGenerator minorStatusServiceGenerator) throws GaswException {
 
         super(gaswInput, minorStatusServiceGenerator);
 
         if (submitPool == null || submitPool.isInterrupted() || !submitPool.isAlive()) {
+            logger.info("Starting new SubmitPool");
             submitPool = new SubmitPool();
             submitPool.start();
         }
@@ -100,15 +93,10 @@ public class DiracSubmit extends GaswSubmit {
         }
     }
 
-    /**
-     *
-     * @param scriptName
-     * @return
-     */
     private String generateJdl(String scriptName) throws GaswException {
 
         DiracJdlGenerator generator = DiracJdlGenerator.getInstance();
-        return publishJdl(scriptName, generator.generate(scriptName, gaswInput.getEnvVariables(), gaswInput.isMoteurLiteEnabled()));
+        return publishJdl(scriptName, generator.generate(scriptName));
     }
 
     /**
@@ -116,15 +104,10 @@ public class DiracSubmit extends GaswSubmit {
      */
     private class SubmitPool extends Thread {
 
-        private boolean stop = false;
-
-        public SubmitPool() {
-        }
-
         @Override
         public void run() {
 
-            while (!stop) {
+            while (true) {
                 Process process = null;
                 try {
 
@@ -138,7 +121,7 @@ public class DiracSubmit extends GaswSubmit {
                             command.add(GaswConstants.JDL_ROOT + "/" + job.getFileName() + ".jdl");
                         }
 
-                        process = GaswUtil.getProcess(logger, command.toArray(new String[]{}));
+                        process = DiracProcessUtils.getDiracProcess(logger, command.toArray(new String[]{}));
 
                         BufferedReader br = GaswUtil.getBufferedReader(process);
                         String cout = "";
@@ -186,14 +169,11 @@ public class DiracSubmit extends GaswSubmit {
                     logger.error("[DIRAC] error submitting DIRAC jobs", ex);
                 } catch (InterruptedException ex) {
                     logger.error("[DIRAC] jobs submitting thread interrupted" + ex);
+                    break;
                 } finally {
                     closeProcess(process);
                 }
             }
-        }
-
-        public void terminate() {
-            this.stop = true;
         }
     }
 
@@ -215,19 +195,13 @@ public class DiracSubmit extends GaswSubmit {
         }
     }
 
-    public static void terminate() {
-
+    public static void terminate() throws InterruptedException {
         if (submitPool != null) {
-            submitPool.terminate();
+            submitPool.interrupt();
+            submitPool.join();
         }
     }
 
-    /**
-     * Closes a process.
-     *
-     * @param process
-     * @throws IOException
-     */
     private void closeProcess(Process process) {
         if (process != null) {
             try {

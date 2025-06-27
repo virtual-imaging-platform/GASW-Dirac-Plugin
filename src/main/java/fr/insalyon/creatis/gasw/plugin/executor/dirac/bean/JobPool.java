@@ -34,7 +34,7 @@
  */
 package fr.insalyon.creatis.gasw.plugin.executor.dirac.bean;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 
 /**
  *

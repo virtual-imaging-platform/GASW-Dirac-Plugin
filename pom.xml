@@ -4,17 +4,17 @@
 
     <groupId>fr.insalyon.creatis</groupId>
     <artifactId>gasw-dirac-plugin</artifactId>
-    <version>3.11.0</version>
+    <version>4.0</version>
     <packaging>jar</packaging>
 
     <name>GASW-Dirac-Plugin</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>11</maven.compiler.source>
-        <maven.compiler.target>11</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
 
-        <gasw-version>3.11.0</gasw-version>
+        <gasw-version>4.0</gasw-version>
     </properties>
 
     <licenses>
@@ -59,40 +59,13 @@
                     </execution>
                 </executions>
             </plugin>
-            <!-- config necessary to include the maven version
-             into the MANIFEST file of the default jar-->
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.2.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
-                            <addDefaultSpecificationEntries>true</addDefaultSpecificationEntries>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
             </plugin>
             <plugin>
               <artifactId>maven-surefire-plugin</artifactId>
-              <version>2.21.0</version>
-              <dependencies>
-                <dependency>
-                  <groupId>org.junit.platform</groupId>
-                  <artifactId>junit-platform-surefire-provider</artifactId>
-                  <version>1.2.0</version>
-                </dependency>
-                <dependency>
-                  <groupId>org.junit.jupiter</groupId>
-                  <artifactId>junit-jupiter-engine</artifactId>
-                  <version>5.2.0</version>
-                </dependency>
-              </dependencies>
+              <version>3.5.2</version>
             </plugin>
         </plugins>
     </build>
@@ -106,10 +79,17 @@
         </dependency>
 
         <dependency>
-          <groupId>org.junit.jupiter</groupId>
-          <artifactId>junit-jupiter-engine</artifactId>
-          <version>5.2.0</version>
-          <scope>test</scope>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <version>5.11.0</version>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-junit-jupiter</artifactId>
+            <version>5.13.0</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
     

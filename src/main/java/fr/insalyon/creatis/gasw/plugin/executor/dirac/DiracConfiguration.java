@@ -34,17 +34,12 @@ package fr.insalyon.creatis.gasw.plugin.executor.dirac;
 
 import fr.insalyon.creatis.gasw.GaswConfiguration;
 import fr.insalyon.creatis.gasw.GaswException;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.log4j.Logger;
 
-/**
- *
- * @author Rafael Ferreira da Silva
- */
 public class DiracConfiguration {
 
     private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
@@ -61,9 +56,11 @@ public class DiracConfiguration {
     private boolean dynamicBanEnabled;
     private List<Object> bannedSites;
     private List<Object> siteNamesToIgnore;
+    private List<Object> siteNames;
+    private List<Object> tags;
+    private String diracosrcPath;
 
     public static DiracConfiguration getInstance() throws GaswException {
-
         if (instance == null) {
             instance = new DiracConfiguration();
         }
@@ -82,7 +79,10 @@ public class DiracConfiguration {
         boolean balanceEnabled,
         boolean dynamicBanEnabled,
         List<Object> bannedSites,
-        List<Object> namesToIgnore) {
+        List<Object> namesToIgnore,
+        List<Object> siteNames,
+        List<Object> tags,
+        String diracosrcPath) {
 
         instance = new DiracConfiguration(
             host,
@@ -96,7 +96,10 @@ public class DiracConfiguration {
             balanceEnabled,
             dynamicBanEnabled,
             bannedSites,
-            namesToIgnore);
+            namesToIgnore,
+            siteNames,
+            tags,
+            diracosrcPath);
     }
 
     private DiracConfiguration(
@@ -111,7 +114,10 @@ public class DiracConfiguration {
         boolean balanceEnabled,
         boolean dynamicBanEnabled,
         List<Object> bannedSites,
-        List<Object> namesToIgnore) {
+        List<Object> namesToIgnore,
+        List<Object> siteNames,
+        List<Object> tags,
+        String diracosrcPath) {
 
         this.host = host;
         this.defaultPool = defaultPool;
@@ -125,6 +131,9 @@ public class DiracConfiguration {
         this.dynamicBanEnabled = dynamicBanEnabled;
         this.bannedSites = bannedSites;
         this.siteNamesToIgnore = namesToIgnore;
+        this.siteNames = siteNames;
+        this.tags = tags;
+        this.diracosrcPath = diracosrcPath;
     }
 
     private DiracConfiguration() throws GaswException {
@@ -142,8 +151,11 @@ public class DiracConfiguration {
             notificationPort = config.getInt(DiracConstants.LAB_NOTIFICATION_PORT, 50009);
             balanceEnabled = config.getBoolean(DiracConstants.LAB_BALANCE_ENABLED, false);
             dynamicBanEnabled = config.getBoolean(DiracConstants.LAB_CONF_DYNAMIC_BAN_ENABLED, true);
-            bannedSites = config.getList(DiracConstants.LAB_CONF_BANNED_SITES, new ArrayList());
+            bannedSites = config.getList(DiracConstants.LAB_CONF_BANNED_SITES, Arrays.asList());
             siteNamesToIgnore = config.getList(DiracConstants.LAB_CONF_SITE_NAMES_TO_IGNORE, Arrays.asList("Any", "Multiple"));
+            siteNames = config.getList(DiracConstants.LAB_CONF_SITE_NAMES, Arrays.asList());
+            tags = config.getList(DiracConstants.LAB_TAGS, Arrays.asList());
+            diracosrcPath = config.getString(DiracConstants.LAB_CONF_DIRACOSRC_FILEPATH, "/vip/dirac/diracos/diracosrc");
 
             config.setProperty(DiracConstants.LAB_HOST, host);
             config.setProperty(DiracConstants.LAB_DEFAULT_POOL, defaultPool);
@@ -157,6 +169,9 @@ public class DiracConfiguration {
             config.setProperty(DiracConstants.LAB_CONF_DYNAMIC_BAN_ENABLED, dynamicBanEnabled);
             config.setProperty(DiracConstants.LAB_CONF_BANNED_SITES, bannedSites);
             config.setProperty(DiracConstants.LAB_CONF_SITE_NAMES_TO_IGNORE, siteNamesToIgnore);
+            config.setProperty(DiracConstants.LAB_CONF_SITE_NAMES, siteNames);
+            config.setProperty(DiracConstants.LAB_TAGS, tags);
+            config.setProperty(DiracConstants.LAB_CONF_DIRACOSRC_FILEPATH, diracosrcPath);
 
             config.save();
 
@@ -205,11 +220,24 @@ public class DiracConfiguration {
         return dynamicBanEnabled;
     }
 
-    public String[] getBannedSites() {
-        return bannedSites.toArray(new String[]{});
+    public List<String> getBannedSites() {
+        return bannedSites.stream().map((obj) -> (String) obj).toList();
     }
 
     public List<Object> getSiteNamesToIgnore() {
         return siteNamesToIgnore;
     }
+
+    public List<String> getSites() {
+        return siteNames.stream().map((obj) -> (String) obj).toList();
+    }
+
+    public List<String> getTags() {
+        return tags.stream().map((obj) -> (String) obj).toList();
+    }
+
+    public String getDiracosrcPath() {
+        return diracosrcPath;
+    }
+
 }
