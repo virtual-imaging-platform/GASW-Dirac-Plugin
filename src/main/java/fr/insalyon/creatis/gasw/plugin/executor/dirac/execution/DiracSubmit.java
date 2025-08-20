@@ -103,11 +103,16 @@ public class DiracSubmit extends GaswSubmit {
      * DIRAC Submission Thread
      */
     private class SubmitPool extends Thread {
+        private boolean stop = false;
+
+        public synchronized void setStop(boolean value) {
+            stop = value;
+        } 
 
         @Override
         public void run() {
 
-            while (true) {
+            while ( ! stop) {
                 Process process = null;
                 try {
 
@@ -195,9 +200,13 @@ public class DiracSubmit extends GaswSubmit {
         }
     }
 
-    public static void terminate() throws InterruptedException {
+    public static void terminate(boolean force) throws InterruptedException {
         if (submitPool != null) {
-            submitPool.interrupt();
+            if (force) {
+                submitPool.interrupt();
+            } else {
+                submitPool.setStop(true);
+            }
             submitPool.join();
         }
     }
