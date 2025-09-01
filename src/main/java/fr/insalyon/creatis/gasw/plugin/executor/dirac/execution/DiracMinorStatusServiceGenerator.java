@@ -38,10 +38,6 @@ import fr.insalyon.creatis.gasw.GaswException;
 import fr.insalyon.creatis.gasw.execution.GaswMinorStatusServiceGenerator;
 import fr.insalyon.creatis.gasw.util.VelocityUtil;
 
-/**
- *
- * @author Rafael Ferreira da Silva
- */
 public class DiracMinorStatusServiceGenerator extends GaswMinorStatusServiceGenerator {
 
     private static DiracMinorStatusServiceGenerator instance;

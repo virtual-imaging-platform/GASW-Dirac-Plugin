@@ -45,7 +45,6 @@ public class DiracJdlGeneratorTest {
     @AfterAll
     public static void removeCreatedFiles() throws IOException {
         deleteRecursively("./conf"); // Generator configuration file.
-        deleteRecursively("./velocity.log");
     }
 
     private static void deleteRecursively(String fileOrDir) throws IOException {

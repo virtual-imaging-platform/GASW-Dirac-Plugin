@@ -44,7 +44,8 @@ import java.util.Random;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import fr.insalyon.creatis.gasw.GaswConfiguration;
 import fr.insalyon.creatis.gasw.GaswConstants;
@@ -52,13 +53,9 @@ import fr.insalyon.creatis.gasw.GaswException;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
 import fr.insalyon.creatis.gasw.util.VelocityUtil;
 
-/**
- *
- * @author Rafael Ferreira da Silva
- */
 public class DiracJdlGenerator {
 
-    private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
+    private static final Logger logger = LoggerFactory.getLogger(DiracJdlGenerator.class);
     private static DiracJdlGenerator instance;
 
     private String scriptPath;
@@ -133,7 +130,7 @@ public class DiracJdlGenerator {
             return velocity.merge().toString();
 
         } catch (Exception ex) {
-            logger.error(ex);
+            logger.error("Error while generating jdl", ex);
             return "";
         }
     }
@@ -149,7 +146,7 @@ public class DiracJdlGenerator {
             Files.write(path, replaced);
             lines.close();
         } catch (IOException e) {
-            logger.error(e);
+            logger.error("Error:", e);
         }
     }
 
@@ -180,7 +177,7 @@ public class DiracJdlGenerator {
                 }
                 String finalLine = "BannedSite = \"" + bannedSitesBuilder.toString() + "\";";
                 replaceLineInJdl(jdlFile, keyword, finalLine);
-                logger.info("Replacing old banned sites with new list: " + finalLine + " for command " + command);
+                logger.info("Replacing old banned sites with new list: {} for command {}", finalLine, command);
             }
         }
 

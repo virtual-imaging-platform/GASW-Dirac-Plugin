@@ -1,6 +1,8 @@
 package fr.insalyon.creatis.gasw.plugin.executor.dirac.execution;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -10,7 +12,7 @@ import java.util.Map;
 
 public class DiracFaultySites {
 
-    private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
+    private static final Logger logger = LoggerFactory.getLogger(DiracFaultySite.class);
     private Map<String, DiracFaultySite> faultySites;
 
     public DiracFaultySites() {
@@ -18,7 +20,7 @@ public class DiracFaultySites {
     }
 
     public void reportErrorOnSite (String siteName) {
-        logger.info("[DiracFaultySites] Report error on site " + siteName);
+        logger.info("[DiracFaultySites] Report error on site {}", siteName);
         if (this.faultySites.containsKey(siteName)) {
             this.faultySites.get(siteName).addError();
         } else {
@@ -27,7 +29,7 @@ public class DiracFaultySites {
     }
 
     public void reportSuccessOnSite(String siteName) {
-        logger.info("[DiracFaultySites] Report success on site " + siteName +". Removing it from the list.");
+        logger.info("[DiracFaultySites] Report success on site {}. Removing it from the list.", siteName);
         if (this.faultySites.containsKey(siteName)) {
             this.faultySites.remove(siteName);
         }
@@ -64,12 +66,12 @@ public class DiracFaultySites {
             long diff = Math.abs(duration.toMinutes());
             //exponential back-off
             if (diff < Math.pow(2, (this.nbErrors - 1))) {
-                logger.info("[DiracFaultySite] site " + siteName + " is banned since last failure was "+
-                        diff + " min ago, and the number of errors is " +this.nbErrors);
+                logger.info("[DiracFaultySite] site {} is banned since last failure was "+
+                        diff + " min ago, and the number of errors is {}", siteName, this.nbErrors);
                 return true;
             } else {
-                logger.info("[DiracFaultySite] site " + siteName + " is NOT to be banned since last failure was "+
-                        diff + " min ago, and the number of errors is " +this.nbErrors);
+                logger.info("[DiracFaultySite] site {} is NOT to be banned since last failure was "+
+                        diff + " min ago, and the number of errors is {}", siteName, this.nbErrors);
                 return false;
             }
         }
