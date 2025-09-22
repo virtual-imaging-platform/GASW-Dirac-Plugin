@@ -52,6 +52,7 @@ public class DiracMonitor extends GaswMonitor {
 
     private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
     private static DiracMonitor instance;
+    private boolean stop = false;
 
     public synchronized static DiracMonitor getInstance() throws GaswException {
         if (instance == null) {
@@ -68,12 +69,16 @@ public class DiracMonitor extends GaswMonitor {
         }
     }
 
+    public synchronized void setStop(boolean value) {
+        stop = value;
+    }
+
     @Override
     public void run() {
         Process process = null;
         DiracJdlGenerator generator;
 
-        while (true) {
+        while ( ! stop) {
             try {
                 generator = DiracJdlGenerator.getInstance();
                 verifySignaledJobs();
@@ -496,9 +501,13 @@ public class DiracMonitor extends GaswMonitor {
         process = null;
     }
 
-    public static void terminate() throws InterruptedException {
+    public static void terminate(boolean force) throws InterruptedException {
         if (instance != null) {
-            instance.interrupt();
+            if (force) {
+                instance.interrupt();
+            } else {
+                instance.setStop(true);
+            }
             instance.join();
         }
     }
