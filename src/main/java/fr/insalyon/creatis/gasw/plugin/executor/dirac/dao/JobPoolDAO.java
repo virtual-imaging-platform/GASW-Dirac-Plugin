@@ -38,10 +38,6 @@ import fr.insalyon.creatis.gasw.dao.DAOException;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import java.util.List;
 
-/**
- *
- * @author Rafael Silva
- */
 public interface JobPoolDAO {
 
     public void add(JobPool jobPool) throws DAOException;

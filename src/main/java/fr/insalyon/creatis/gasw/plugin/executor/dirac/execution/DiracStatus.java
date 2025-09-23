@@ -34,10 +34,6 @@
  */
 package fr.insalyon.creatis.gasw.plugin.executor.dirac.execution;
 
-/**
- *
- * @author Rafael Silva
- */
 public enum DiracStatus {
 
     Checking,

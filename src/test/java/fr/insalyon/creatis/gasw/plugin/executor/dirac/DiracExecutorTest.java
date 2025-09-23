@@ -5,10 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import fr.insalyon.creatis.gasw.GaswException;
 import fr.insalyon.creatis.gasw.GaswUtil;
@@ -28,7 +29,7 @@ public class DiracExecutorTest {
     @Test
     public void testDiracAvailable() throws GaswException {
         DiracExecutor executor = new DiracExecutor();
-        Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
+        Logger logger = LoggerFactory.getLogger(DiracExecutor.class);
 
         Process mockProcess = mock(Process.class);
         when(mockProcess.exitValue()).thenReturn(0);

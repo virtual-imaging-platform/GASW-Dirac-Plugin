@@ -32,10 +32,6 @@
  */
 package fr.insalyon.creatis.gasw.plugin.executor.dirac;
 
-/**
- *
- * @author Rafael Ferreira da Silva
- */
 public class DiracConstants {
 
     public static final String EXECUTOR_NAME = "DIRAC";
