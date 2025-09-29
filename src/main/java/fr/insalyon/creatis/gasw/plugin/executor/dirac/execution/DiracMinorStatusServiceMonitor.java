@@ -49,15 +49,13 @@ import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.net.Socket;
 import java.util.Date;
-import org.apache.log4j.Logger;
 
-/**
- *
- * @author Rafael Ferreira da Silva
- */
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public class DiracMinorStatusServiceMonitor extends Thread {
 
-    private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
+    private static final Logger logger = LoggerFactory.getLogger(DiracMinorStatusServiceMonitor.class);
     private static final String SEPARATOR = "###";
     private static DiracMinorStatusServiceMonitor instance;
     private boolean stop;
@@ -106,7 +104,7 @@ public class DiracMinorStatusServiceMonitor extends Thread {
                             listener.jobMinorStatusReported(status);
                         }
                     } catch (DAOException ex) {
-                        logger.warn(ex);
+                        logger.warn("Error:", ex);
                     }
                 }
                 in.close();
@@ -115,7 +113,7 @@ public class DiracMinorStatusServiceMonitor extends Thread {
                 break;
 
             } catch (GaswException ex) {
-                logger.error(ex);
+                logger.error("Error:", ex);
 
             } catch (IOException ex) {
                 if (!stop) {

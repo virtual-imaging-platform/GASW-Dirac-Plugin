@@ -40,26 +40,19 @@ import fr.insalyon.creatis.gasw.dao.DAOException;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.hibernate.JobPoolData;
 import org.hibernate.SessionFactory;
 
-/**
- *
- * @author Rafael Silva
- */
 public class DiracDAOFactory {
 
     private static DiracDAOFactory instance;
     private SessionFactory sessionFactory;
 
     public static DiracDAOFactory getInstance() throws DAOException {
-
         if (instance == null) {
             instance = new DiracDAOFactory();
         }
-
         return instance;
     }
     
     private DiracDAOFactory() throws DAOException {
-        
         try {
             this.sessionFactory = GaswConfiguration.getInstance().getSessionFactory();
         } catch (GaswException ex) {

@@ -37,7 +37,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import fr.insalyon.creatis.gasw.GaswConfiguration;
 import fr.insalyon.creatis.gasw.GaswConstants;
@@ -54,7 +55,7 @@ import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.DiracDAOFactory;
 
 public class DiracSubmit extends GaswSubmit {
 
-    private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
+    private static final Logger logger = LoggerFactory.getLogger(DiracSubmit.class);
     private static SubmitPool submitPool;
 
     public DiracSubmit(GaswInput gaswInput,
@@ -94,7 +95,6 @@ public class DiracSubmit extends GaswSubmit {
     }
 
     private String generateJdl(String scriptName) throws GaswException {
-
         DiracJdlGenerator generator = DiracJdlGenerator.getInstance();
         return publishJdl(scriptName, generator.generate(scriptName));
     }
@@ -103,11 +103,16 @@ public class DiracSubmit extends GaswSubmit {
      * DIRAC Submission Thread
      */
     private class SubmitPool extends Thread {
+        private boolean stop = false;
+
+        public synchronized void setStop(boolean value) {
+            stop = value;
+        } 
 
         @Override
         public void run() {
 
-            while (true) {
+            while ( ! stop) {
                 Process process = null;
                 try {
 
@@ -149,10 +154,10 @@ public class DiracSubmit extends GaswSubmit {
                                         job.getParams());
 
                                 DiracDAOFactory.getInstance().getJobPoolDAO().remove(job);
-                                logger.info("Dirac Executor Job ID is: " + id + " for " + job.getFileName());
+                                logger.info("Dirac Executor Job ID is: {} for {}", id, job.getFileName());
 
                             } catch (Exception ex) {
-                                logger.error("Unable to submit job. DIRAC Error: " + s);
+                                logger.error("Unable to submit job. DIRAC Error: {}", s);
                                 i++;
                             }
                         }
@@ -166,9 +171,9 @@ public class DiracSubmit extends GaswSubmit {
                     Thread.sleep(GaswConfiguration.getInstance().getDefaultSleeptime() / 2);
 
                 } catch (IOException | GaswException | DAOException ex) {
-                    logger.error("[DIRAC] error submitting DIRAC jobs", ex);
+                    logger.error("Error submitting DIRAC jobs", ex);
                 } catch (InterruptedException ex) {
-                    logger.error("[DIRAC] jobs submitting thread interrupted" + ex);
+                    logger.error("Jobs submitting thread interrupted", ex);
                     break;
                 } finally {
                     closeProcess(process);
@@ -186,18 +191,22 @@ public class DiracSubmit extends GaswSubmit {
                 if (job.isReplicating()) {
                     job.setReplicating(false);
                     jobDAO.update(job);
-                    logger.info("Dirac Submit: job \"" + job.getId() + "\" is now replicated");
+                    logger.info("Dirac Submit: job \"{}\" is now replicated", job.getId());
                 }
             }
 
         } catch (DAOException ex) {
-            logger.error("[DIRAC] error signaling replicating event", ex);
+            logger.error("Error signaling replicating event", ex);
         }
     }
 
-    public static void terminate() throws InterruptedException {
+    public static void terminate(boolean force) throws InterruptedException {
         if (submitPool != null) {
-            submitPool.interrupt();
+            if (force) {
+                submitPool.interrupt();
+            } else {
+                submitPool.setStop(true);
+            }
             submitPool.join();
         }
     }
@@ -209,7 +218,7 @@ public class DiracSubmit extends GaswSubmit {
                 process.getInputStream().close();
                 process.getErrorStream().close();
             } catch (IOException ex) {
-                logger.error(ex);
+                logger.error("Error: ", ex);
             }
         }
         process = null;

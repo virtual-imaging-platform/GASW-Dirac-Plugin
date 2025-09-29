@@ -44,17 +44,12 @@ import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import static fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracJdlGenerator.*;
-
-/**
- *
- * @author Rafael Ferreira da Silva, Tram Truong Huu
- */
 public class DiracOutputParser extends GaswOutputParser {
 
-    private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
+    private static final Logger logger = LoggerFactory.getLogger(GaswOutputParser.class);
     private File stdOut;
     private File stdErr;
     private File provenance;
@@ -76,14 +71,14 @@ public class DiracOutputParser extends GaswOutputParser {
 
             gaswExitCode = getAndParseDiracOutputFiles();
             while ( remainingTries > 0 && GaswExitCode.UNDEFINED.equals(gaswExitCode) ) {
-                logger.error("[Dirac] Error downloading logs for " + job.getId() + " . Remaining tries : " + remainingTries);
+                logger.error("Error downloading logs for {} . Remaining tries : {}", job.getId(), remainingTries);
                 remainingTries--;
                 waitForNSeconds(10);
                 gaswExitCode = getAndParseDiracOutputFiles();
             }
 
             if (GaswExitCode.UNDEFINED.equals(gaswExitCode)) {
-                logger.error("[Dirac] dirac-wms-job-get-output failed 4 times for " + job.getId());
+                logger.error("dirac-wms-job-get-output failed 4 times for {}", job.getId());
                 String message = "Output files do not exist.";
                 handleFiles (message);
 
@@ -119,7 +114,7 @@ public class DiracOutputParser extends GaswOutputParser {
         try {
             TimeUnit.SECONDS.sleep(10);
         } catch (InterruptedException e) {
-            logger.error("[Dirac] Error getting gasw output", e);
+            logger.error("Error getting gasw output", e);
             throw new GaswException(e);
         }
     }
@@ -142,7 +137,7 @@ public class DiracOutputParser extends GaswOutputParser {
                 }
                 br.close();
 
-                logger.error("[Dirac] Error doing dirac-wms-job-get-output for Job ID: " + job.getId() + " | Status : " + process.exitValue());
+                logger.error("Error doing dirac-wms-job-get-output for Job ID: {} | Status: {}", job.getId(), process.exitValue());
                 logger.error(cout);
                 return GaswExitCode.UNDEFINED;
             }
@@ -171,24 +166,17 @@ public class DiracOutputParser extends GaswOutputParser {
                 case 7:
                     return GaswExitCode.ERROR_WRITE_LOCAL;
                 default:
-                    logger.error("[Dirac] Error after parsing job logs, unknown exit code : " + exitCode);
+                    logger.error("Error after parsing job logs, unknown exit code: {}", exitCode);
                     return GaswExitCode.UNDEFINED;
             }
         } catch (InterruptedException | IOException ex) {
-            logger.error("[Dirac] Error getting gasw output", ex);
+            logger.error("Error getting gasw output", ex);
             throw new GaswException(ex);
         } finally {
             closeProcess(process);
         }
     }
 
-    /**
-     *
-     *
-     * @param extension File extension
-     * @param directory Output directory
-     * @return
-     */
     private File moveDiracOutputStdFile(String extension, String directory) {
         File stdFile = new File("./" + job.getId() + "/" + "std" + extension);
         return moveAppFile(stdFile, extension, directory);
@@ -198,12 +186,7 @@ public class DiracOutputParser extends GaswOutputParser {
         return super.moveProvenanceFile("./" + job.getId());
     }
 
-    /**
-     *
-     * @param content
-     */
     private void saveFiles(String content) {
-
         stdOut = saveFile(GaswConstants.OUT_EXT, GaswConstants.OUT_ROOT, content);
         stdErr = saveFile(GaswConstants.ERR_EXT, GaswConstants.ERR_ROOT, content);
         appStdOut = saveFile(GaswConstants.OUT_APP_EXT, GaswConstants.OUT_ROOT, content);
@@ -211,7 +194,6 @@ public class DiracOutputParser extends GaswOutputParser {
     }
 
     /**
-     *
      * Get StdOutErr files from the previous job of the same invocation
      */
     private void getPreviousFiles(GaswOutput previousGaswOutput) {
@@ -224,20 +206,14 @@ public class DiracOutputParser extends GaswOutputParser {
     private void handleFiles (String message){
         GaswOutput previousGaswOutput = GaswNotification.getInstance().getGaswOutputFromLastFailedJob(job.getFileName() + ".jdl");
         if (previousGaswOutput !=  null) {
-            logger.info("Getting previous StdOutErr files for job instance "+job.getFileName());
-            getPreviousFiles (previousGaswOutput);
+            logger.info("Getting previous StdOutErr files for job instance {}", job.getFileName());
+            getPreviousFiles(previousGaswOutput);
         } else {
-            logger.info("Saving StdOutErr files with message "+message);
+            logger.info("Saving StdOutErr files with message {}", message);
             saveFiles(message);
         }
     }
 
-    /**
-     * Closes a process.
-     *
-     * @param process
-     * @throws IOException
-     */
     private void closeProcess(Process process) {
         if (process != null) {
             try {
@@ -245,7 +221,7 @@ public class DiracOutputParser extends GaswOutputParser {
                 process.getInputStream().close();
                 process.getErrorStream().close();
             } catch (IOException ex) {
-                logger.error(ex);
+                logger.error("Error: ",ex);
             }
         }
         process = null;
@@ -269,5 +245,4 @@ public class DiracOutputParser extends GaswOutputParser {
         }
 
     }
-
 }

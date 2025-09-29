@@ -16,6 +16,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
+import fr.insalyon.creatis.gasw.GaswConfiguration;
 import fr.insalyon.creatis.gasw.GaswException;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.DiracConfiguration;
 
@@ -24,6 +25,8 @@ public class DiracJdlGeneratorTest {
 
     @BeforeAll
     public static void createConfiguration() {
+        // to avoid containers.runtime strict checking
+        GaswConfiguration.setStrict(false);
         DiracConfiguration.setConfiguration(
             "host",
             "defaultPool",
@@ -45,7 +48,6 @@ public class DiracJdlGeneratorTest {
     @AfterAll
     public static void removeCreatedFiles() throws IOException {
         deleteRecursively("./conf"); // Generator configuration file.
-        deleteRecursively("./velocity.log");
     }
 
     private static void deleteRecursively(String fileOrDir) throws IOException {

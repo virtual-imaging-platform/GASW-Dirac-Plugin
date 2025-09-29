@@ -5,10 +5,11 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.apache.log4j.Logger;
 import org.junit.jupiter.api.Test;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import fr.insalyon.creatis.gasw.GaswException;
 import fr.insalyon.creatis.gasw.GaswUtil;
@@ -28,14 +29,18 @@ public class DiracExecutorTest {
     @Test
     public void testDiracAvailable() throws GaswException {
         DiracExecutor executor = new DiracExecutor();
-        Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
+        Logger logger = LoggerFactory.getLogger(DiracExecutor.class);
 
         Process mockProcess = mock(Process.class);
         when(mockProcess.exitValue()).thenReturn(0);
 
         MockedStatic<GaswUtil> util = Mockito.mockStatic(GaswUtil.class);
-        String diracRcPath = DiracConfiguration.getInstance().getDiracosrcPath();
-        util.when(() -> GaswUtil.getProcess(logger, "bash", "-c", "source " + diracRcPath + "; dirac-version")).thenReturn(mockProcess);
+        DiracConfiguration mockedDiracConfig = Mockito.mock(DiracConfiguration.class);
+        DiracConfiguration.setInstance(mockedDiracConfig);
+
+        String testDiracosrcPath = "/test/path/to/diracosrc";
+        when(mockedDiracConfig.getDiracosrcPath()).thenReturn(testDiracosrcPath);
+        util.when(() -> GaswUtil.getProcess(logger, "bash", "-c", "source " + testDiracosrcPath + "; dirac-version")).thenReturn(mockProcess);
 
         assertDoesNotThrow(() -> executor.checkDiracAvailable());
     }

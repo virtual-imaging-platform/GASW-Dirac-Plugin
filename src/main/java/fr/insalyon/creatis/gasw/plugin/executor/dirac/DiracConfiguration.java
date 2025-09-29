@@ -38,11 +38,12 @@ import java.util.Arrays;
 import java.util.List;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DiracConfiguration {
 
-    private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
+    private static final Logger logger = LoggerFactory.getLogger(DiracConfiguration.class);
     private static DiracConfiguration instance;
     private String host;
     private String defaultPool;
@@ -67,6 +68,12 @@ public class DiracConfiguration {
         return instance;
     }
 
+    // for tests purposes
+    static void setInstance(DiracConfiguration instance) {
+        DiracConfiguration.instance = instance;
+    }
+
+    // for tests purposes
     public static void setConfiguration(
         String host,
         String defaultPool,
@@ -176,7 +183,7 @@ public class DiracConfiguration {
             config.save();
 
         } catch (ConfigurationException ex) {
-            logger.error(ex);
+            logger.error("Error: ", ex);
         }
     }
 

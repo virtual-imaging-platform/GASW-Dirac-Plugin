@@ -38,18 +38,15 @@ import fr.insalyon.creatis.gasw.dao.DAOException;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.dao.JobPoolDAO;
 import java.util.List;
-import org.apache.log4j.Logger;
 import org.hibernate.HibernateException;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-/**
- *
- * @author Rafael Silva
- */
 public class JobPoolData implements JobPoolDAO {
 
-    private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
+    private static final Logger logger = LoggerFactory.getLogger(JobPoolData.class);
     private SessionFactory sessionFactory;
 
     public JobPoolData(SessionFactory sessionFactory) {
@@ -68,7 +65,7 @@ public class JobPoolData implements JobPoolDAO {
             session.close();
 
         } catch (HibernateException ex) {
-            logger.error(ex);
+            logger.error("Error while adding job", ex);
             throw new DAOException(ex);
         }
     }
@@ -84,7 +81,7 @@ public class JobPoolData implements JobPoolDAO {
             session.close();
 
         } catch (HibernateException ex) {
-            logger.error(ex);
+            logger.error("Error while removing job", ex);
             throw new DAOException(ex);
         }
     }
@@ -102,7 +99,7 @@ public class JobPoolData implements JobPoolDAO {
             return list;
 
         } catch (HibernateException ex) {
-            logger.error(ex);
+            logger.error("Error while retrieving jobs", ex);
             throw new DAOException(ex);
         }
     }

@@ -34,7 +34,6 @@ package fr.insalyon.creatis.gasw.plugin.executor.dirac;
 
 import fr.insalyon.creatis.gasw.GaswException;
 import fr.insalyon.creatis.gasw.GaswInput;
-import fr.insalyon.creatis.gasw.GaswUtil;
 import fr.insalyon.creatis.gasw.plugin.ExecutorPlugin;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.bean.JobPool;
 import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracMinorStatusServiceGenerator;
@@ -45,13 +44,16 @@ import fr.insalyon.creatis.gasw.plugin.executor.dirac.execution.DiracSubmit;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import net.xeoh.plugins.base.annotations.PluginImplementation;
-import org.apache.log4j.Logger;
 
 @PluginImplementation
 public class DiracExecutor implements ExecutorPlugin {
 
-    private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
+    private static final Logger logger = LoggerFactory.getLogger(DiracExecutor.class);
 
     private DiracSubmit diracSubmit;
 
@@ -65,8 +67,8 @@ public class DiracExecutor implements ExecutorPlugin {
         checkDiracAvailable();
 
         // fetch version from maven generated file
-        logger.info("Loading Dirac GASW Plugin version "
-                + getClass().getPackage().getImplementationVersion());
+        logger.info("Loading Dirac GASW Plugin version {}",
+                getClass().getPackage().getImplementationVersion());
 
         DiracConfiguration.getInstance();
         diracSubmit = new DiracSubmit(gaswInput, DiracMinorStatusServiceGenerator.getInstance());
@@ -86,10 +88,10 @@ public class DiracExecutor implements ExecutorPlugin {
     }
 
     @Override
-    public void terminate() throws GaswException {
+    public void terminate(boolean force) throws GaswException {
         try {
-            DiracSubmit.terminate();
-            DiracMonitor.terminate();
+            DiracSubmit.terminate(force);
+            DiracMonitor.terminate(force);
         } catch (InterruptedException e) {
             logger.warn("Hard-kill occured!");
         }

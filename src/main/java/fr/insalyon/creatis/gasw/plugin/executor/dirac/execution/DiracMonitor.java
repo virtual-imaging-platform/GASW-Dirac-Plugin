@@ -46,12 +46,14 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import org.apache.log4j.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DiracMonitor extends GaswMonitor {
 
-    private static final Logger logger = Logger.getLogger("fr.insalyon.creatis.gasw");
+    private static final Logger logger = LoggerFactory.getLogger(DiracMonitor.class);
     private static DiracMonitor instance;
+    private boolean stop = false;
 
     public synchronized static DiracMonitor getInstance() throws GaswException {
         if (instance == null) {
@@ -68,12 +70,16 @@ public class DiracMonitor extends GaswMonitor {
         }
     }
 
+    public synchronized void setStop(boolean value) {
+        stop = value;
+    }
+
     @Override
     public void run() {
         Process process = null;
         DiracJdlGenerator generator;
 
-        while (true) {
+        while ( ! stop) {
             try {
                 generator = DiracJdlGenerator.getInstance();
                 verifySignaledJobs();
@@ -111,7 +117,7 @@ public class DiracMonitor extends GaswMonitor {
                             Job job = jobDAO.getJobByID(jobIdReturnedByDirac);
 
                             if ( (job.getDiracSite() == null) && !(DiracConfiguration.getInstance().getSiteNamesToIgnore().contains(diracSite)) ) {
-                                logger.info("Dirac Monitor: setting dirac Site to ***" + diracSite + "*** for job id " + jobIdReturnedByDirac);
+                                logger.info("Setting dirac Site to ***{}*** for job id {}", diracSite, jobIdReturnedByDirac);
                                 job.setDiracSite(diracSite);
                                 jobDAO.update(job);
                             }
@@ -124,13 +130,11 @@ public class DiracMonitor extends GaswMonitor {
                                 // Another job of the same invocation has
                                 // finished successfully (probably just before,
                                 // in the same monitor run)
-                                logger.info("Dirac Monitor: job \"" + job.getId() + "\" [ status : "
-                                        + job.getStatus() + " ] is a replicate of a finished job");
+                                logger.info("Job \"{}\" [ status : {} ] is a replicate of a finished job",
+                                    job.getId(), job.getStatus());
                                 if (job.getStatus() != GaswStatus.CANCELLED_REPLICA && job.getStatus() != GaswStatus.DELETED_REPLICA) {
-                                    logger.info("Dirac Monitor: job \"" + job.getId() +
-                                            "\" [ status : " + job.getStatus() +
-                                            " ] is a replicate of a finished job" +
-                                            " but has not been properly killed");
+                                    logger.info("Job \"{}\" [ status : {}] is a replicate of a finished job" +
+                                            " but has not been properly killed", job.getId(), job.getStatus());
                                     job.setStatus(GaswStatus.KILL_REPLICA);
                                     updateStatus(job);
                                     kill(job);
@@ -173,7 +177,7 @@ public class DiracMonitor extends GaswMonitor {
                                         break;
                                     case Completed:
                                     case Completing:
-                                        logger.info("Dirac Monitor: job \"" + job.getId() + "\" has status \"" + status + "\"");
+                                        logger.info("Job \"{}\" has status \"{}\"", job.getId(), status);
                                     default:
                                         finished = false;
                                 }
@@ -190,7 +194,7 @@ public class DiracMonitor extends GaswMonitor {
                                     // being replicated
                                     job.setReplicating(true);
                                     updateStatus(job);
-                                    logger.info("Dirac Monitor: job \"" + job.getId() + "\" finished as \"" + status + "\"");
+                                    logger.info("Job \"{}\" finished as \"{}\"", job.getId(), status);
 
                                     new DiracOutputParser(job.getId()).start();
 
@@ -198,8 +202,8 @@ public class DiracMonitor extends GaswMonitor {
                                         killReplicas(job);
                                     }
                                 } else if (job.getStatus() == GaswStatus.REPLICATE) {
-                                    logger.error("Dirac Monitor: job \"" + job.getId() + "\"" +
-                                            "should not have REPLICATED status after a monitor run");
+                                    logger.error("Job \"{}\"" +
+                                            "should not have REPLICATED status after a monitor run", job.getId());
                                 }
                             }
                         }
@@ -207,7 +211,7 @@ public class DiracMonitor extends GaswMonitor {
                     br.close();
                     process.waitFor();
                     if (process.exitValue() != 0) {
-                        logger.error(cout);
+                        logger.error("Error process value: ", cout);
                     }
                     closeProcess(process);
                     checkMissingDiracJob(command.subList(1, command.size()), jobIdsReturnedByDirac);
@@ -215,9 +219,9 @@ public class DiracMonitor extends GaswMonitor {
                 Thread.sleep(GaswConfiguration.getInstance().getDefaultSleeptime());
 
             } catch (IOException | GaswException | DAOException ex) {
-                logger.error("[DIRAC] error monitoring DIRAC jobs", ex);
+                logger.error("Error monitoring DIRAC jobs", ex);
             } catch (InterruptedException ex) {
-                logger.error("[DIRAC] jobs monitoring thread interrupted" + ex);
+                logger.error("Jobs monitoring thread interrupted", ex);
                 killActiveJobs();
                 break;
             } finally {
@@ -272,9 +276,8 @@ public class DiracMonitor extends GaswMonitor {
         if (sentJobIds.size() == returnedJobIds.size()) {
             return;
         }
-        logger.error("[Dirac] size difference between sent (" + sentJobIds.size() +
-                ") and received (" + returnedJobIds.size() + ") jobs" +
-                " when checking status");
+        logger.error("Size difference between sent ({}) and received ({}) jobs" +
+                " when checking status", sentJobIds.size(), returnedJobIds.size());
         StringBuilder missingJobIds = new StringBuilder();
         for (String sentJobId : sentJobIds) {
             if ( !returnedJobIds.contains(sentJobId)) {
@@ -283,8 +286,7 @@ public class DiracMonitor extends GaswMonitor {
             }
         }
         if (missingJobIds.length() > 0) {
-            logger.info("[Dirac] missing dirac jobIds when checking status : " +
-                    missingJobIds.toString());
+            logger.info("Missing dirac jobIds when checking status {}", missingJobIds.toString());
         }
     }
 
@@ -324,11 +326,11 @@ public class DiracMonitor extends GaswMonitor {
             br.close();
 
             if (process.exitValue() != 0) {
-                logger.error("Error using " + command + " on jobs " + jobsIds);
+                logger.error("Error using {} on jobs {}", command, jobsIds);
                 logger.error(cout);
             } else {
                 for (Job job: jobs) {
-                    logger.info("Deleted DIRAC Job ID '" + job.getId()  + "' (current status : " + job.getStatus() + ")");
+                    logger.info("Deleted DIRAC Job ID '{}' (current status : {})", job.getId(), job.getStatus());
                     // update status to set a final one : DELETED, with an optional _REPLICA suffix
                     // at the beginning, status should be KILL or KILL_REPLICA, but we keep support if it was already a final one
                     switch (job.getStatus()) {
@@ -340,7 +342,7 @@ public class DiracMonitor extends GaswMonitor {
                             break;
                         default:
                             job.setStatus(GaswStatus.DELETED);
-                            logger.warn("Wrong job status to have a kill request." + job.getStatus());
+                            logger.warn("Wrong job status to have a kill request. {}", job.getStatus());
                             logger.warn("Job set to default status DELETED.");
                             break;
                     }
@@ -354,13 +356,13 @@ public class DiracMonitor extends GaswMonitor {
                         finaliseReplicaJob(job);
                     }
     
-                    logger.info("Dirac Monitor: job \"" + job.getId() + "\" finished as \"" + job.getStatus() + "\"");
+                    logger.info("Dirac Monitor: job \"{}\" finished as \"{}\"", job.getId(), job.getStatus());
                 }
             }
         } catch (IOException | GaswException | DAOException ex) {
-            logger.error("[DIRAC] error killing jobs " + jobs, ex);
+            logger.error("Error killing jobs {}", jobs, ex);
         } catch (InterruptedException ex) {
-            logger.error("[DIRAC] Job killing thread interrupted" + ex);
+            logger.error("Job killing thread interrupted", ex);
         } finally {
             closeProcess(process);
         }
@@ -390,12 +392,12 @@ public class DiracMonitor extends GaswMonitor {
                 // reset download time
                 job.setDownload(null);
                 jobDAO.update(job);
-                logger.info("Rescheduled DIRAC Job ID '" + job.getId() + "'.");
+                logger.info("Rescheduled DIRAC Job ID '{}'.", job.getId());
             }
         } catch (GaswException | IOException | DAOException ex) {
-            logger.error("[DIRAC] error rescheduling job " + job.getId(), ex);
+            logger.error("Error rescheduling job {}", job.getId(), ex);
         } catch (InterruptedException ex) {
-            logger.error("[DIRAC] job rescheduling thread interrupted" + ex);
+            logger.error("Job rescheduling thread interrupted", ex);
         } finally {
             closeProcess(process);
         }
@@ -404,7 +406,7 @@ public class DiracMonitor extends GaswMonitor {
     @Override
     protected void replicate(Job job) {
         try {
-            logger.info("Replicating: " + job.getId() + " - " + job.getFileName());
+            logger.info("Replicating: {} - {}", job.getId(), job.getFileName());
             DiracDAOFactory.getInstance().getJobPoolDAO().add(
                     new JobPool(job.getFileName(), job.getCommand(), job.getParameters()));
 
@@ -419,7 +421,7 @@ public class DiracMonitor extends GaswMonitor {
             jobDAO.update(job);
 
         } catch (DAOException ex) {
-            logger.error("[DIRAC] error replicating job " + job.getId(), ex);
+            logger.error("Error replicating job {}", job.getId(), ex);
         }
     }
 
@@ -427,7 +429,7 @@ public class DiracMonitor extends GaswMonitor {
     protected void killReplicas(Job job) {
         try {
             for (Job j : jobDAO.getActiveJobsByInvocationID(job.getInvocationID())) {
-                logger.info("Killing replica: " + j.getId() + " - " + j.getFileName());
+                logger.info("Killing replica: {} - {}", j.getId(), j.getFileName());
 
                 j.setStatus(GaswStatus.KILL_REPLICA);
                 jobDAO.update(job);
@@ -435,19 +437,19 @@ public class DiracMonitor extends GaswMonitor {
             }
 
         } catch (DAOException ex) {
-            logger.error("[DIRAC] error killing replicas of job " + job.getId(), ex);
+            logger.error("Error killing replicas of job {}", job.getId(), ex);
         }
     }
 
     @Override
     protected void resume(Job job) {
         try {
-            logger.info("Resuming: " + job.getId() + " - " + job.getFileName());
+            logger.info("Resuming: {} - {}", job.getId(), job.getFileName());
             DiracDAOFactory.getInstance().getJobPoolDAO().add(
                     new JobPool(job.getFileName(), job.getCommand(), job.getParameters()));
 
         } catch (DAOException ex) {
-            logger.error("[DIRAC] error resuming job " + job.getId(), ex);
+            logger.error("Error resuming job {}", job.getId(), ex);
         }
     }
 
@@ -460,7 +462,7 @@ public class DiracMonitor extends GaswMonitor {
             factory.getJobDAO().update(job);
 
         } catch (DAOException ex) {
-            logger.error("[DIRAC] error finalising job " + job.getId(), ex);
+            logger.error("Error finalising job {}", job.getId(), ex);
         }
     }
 
@@ -490,15 +492,19 @@ public class DiracMonitor extends GaswMonitor {
                 process.getInputStream().close();
                 process.getErrorStream().close();
             } catch (IOException ex) {
-                logger.error(ex);
+                logger.error("Error", ex);
             }
         }
         process = null;
     }
 
-    public static void terminate() throws InterruptedException {
+    public static void terminate(boolean force) throws InterruptedException {
         if (instance != null) {
-            instance.interrupt();
+            if (force) {
+                instance.interrupt();
+            } else {
+                instance.setStop(true);
+            }
             instance.join();
         }
     }
