@@ -68,6 +68,12 @@ public class DiracConfiguration {
         return instance;
     }
 
+    // for tests purposes
+    static void setInstance(DiracConfiguration instance) {
+        DiracConfiguration.instance = instance;
+    }
+
+    // for tests purposes
     public static void setConfiguration(
         String host,
         String defaultPool,

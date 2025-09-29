@@ -35,8 +35,12 @@ public class DiracExecutorTest {
         when(mockProcess.exitValue()).thenReturn(0);
 
         MockedStatic<GaswUtil> util = Mockito.mockStatic(GaswUtil.class);
-        String diracRcPath = DiracConfiguration.getInstance().getDiracosrcPath();
-        util.when(() -> GaswUtil.getProcess(logger, "bash", "-c", "source " + diracRcPath + "; dirac-version")).thenReturn(mockProcess);
+        DiracConfiguration mockedDiracConfig = Mockito.mock(DiracConfiguration.class);
+        DiracConfiguration.setInstance(mockedDiracConfig);
+
+        String testDiracosrcPath = "/test/path/to/diracosrc";
+        when(mockedDiracConfig.getDiracosrcPath()).thenReturn(testDiracosrcPath);
+        util.when(() -> GaswUtil.getProcess(logger, "bash", "-c", "source " + testDiracosrcPath + "; dirac-version")).thenReturn(mockProcess);
 
         assertDoesNotThrow(() -> executor.checkDiracAvailable());
     }
