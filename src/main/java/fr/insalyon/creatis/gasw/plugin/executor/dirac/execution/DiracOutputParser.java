@@ -151,24 +151,7 @@ public class DiracOutputParser extends GaswOutputParser {
 
             int exitCode = parseStdOut(stdOut);
             exitCode = parseStdErr(stdErr, exitCode);
-
-            switch (exitCode) {
-                case 0:
-                    return GaswExitCode.SUCCESS;
-                case 1:
-                    return GaswExitCode.ERROR_READ_GRID;
-                case 2:
-                    return GaswExitCode.ERROR_WRITE_GRID;
-                case 3:
-                    return GaswExitCode.ERROR_FILE_NOT_FOUND;
-                case 6:
-                    return GaswExitCode.EXECUTION_FAILED;
-                case 7:
-                    return GaswExitCode.ERROR_WRITE_LOCAL;
-                default:
-                    logger.error("Error after parsing job logs, unknown exit code: {}", exitCode);
-                    return GaswExitCode.UNDEFINED;
-            }
+            return GaswExitCode.fromExitCode(exitCode);
         } catch (InterruptedException | IOException ex) {
             logger.error("Error getting gasw output", ex);
             throw new GaswException(ex);
