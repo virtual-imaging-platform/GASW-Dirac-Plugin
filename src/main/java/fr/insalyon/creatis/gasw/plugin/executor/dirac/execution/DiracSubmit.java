@@ -37,6 +37,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,9 +83,11 @@ public class DiracSubmit extends GaswSubmit {
                 params.append(p);
                 params.append(" ");
             }
+
+            String command = FilenameUtils.getBaseName(gaswInput.getExecutableName());
             DiracDAOFactory.getInstance().getJobPoolDAO().add(new JobPool(
                     jdlName.substring(0, jdlName.lastIndexOf(".")),
-                    gaswInput.getExecutableName(),
+                    command,
                     params.toString()));
 
             return jdlName;

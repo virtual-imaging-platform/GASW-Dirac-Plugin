@@ -122,7 +122,7 @@ public class DiracJdlGenerator {
             velocity.put("configPath", configPath);
             velocity.put("workflowFile", workflowFile);
 
-            String command = scriptName.replaceAll("(-[0-9]+.sh)$", "");
+            String command = scriptName.replaceAll("-[0-9]+(\\.sh)?$", "");
             if (!commandBannedSitesMap.containsKey(command)) {
                 commandBannedSitesMap.put(command, bannedSites);
             }
@@ -151,7 +151,7 @@ public class DiracJdlGenerator {
     }
 
     public void updateBannedSitesInJdl(String jdlFile) throws GaswException {
-        String command = jdlFile.replaceAll("(-[0-9]+.jdl)$", "");
+        String command = jdlFile.replaceAll("-[0-9]+(\\.jdl)?$", "");
         List<String> newlyBannedSitesList = getDiracFaultySites(command).getBannedSitesList();
         String keyword = "BannedSite";
         StringBuilder bannedSitesBuilder = new StringBuilder();
