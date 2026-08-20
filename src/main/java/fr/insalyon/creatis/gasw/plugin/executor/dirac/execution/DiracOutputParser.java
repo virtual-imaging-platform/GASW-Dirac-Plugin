@@ -106,7 +106,7 @@ public class DiracOutputParser extends GaswOutputParser {
             handleFiles(message);
         }
 
-        return new GaswOutput(job.getFileName() + ".jdl", gaswExitCode, "",
+        return new GaswOutput(job.getFileName(), gaswExitCode, "",
                 uploadedResults, appStdOut, appStdErr, stdOut, stdErr);
     }
 
@@ -187,7 +187,7 @@ public class DiracOutputParser extends GaswOutputParser {
     }
 
     private void handleFiles (String message){
-        GaswOutput previousGaswOutput = GaswNotification.getInstance().getGaswOutputFromLastFailedJob(job.getFileName() + ".jdl");
+        GaswOutput previousGaswOutput = GaswNotification.getInstance().getGaswOutputFromLastFailedJob(job.getFileName());
         if (previousGaswOutput !=  null) {
             logger.info("Getting previous StdOutErr files for job instance {}", job.getFileName());
             getPreviousFiles(previousGaswOutput);

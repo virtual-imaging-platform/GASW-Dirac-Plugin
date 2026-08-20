@@ -151,7 +151,7 @@ public class DiracJdlGenerator {
     }
 
     public void updateBannedSitesInJdl(String jdlFile) throws GaswException {
-        String command = jdlFile.replaceAll("(-[0-9]+.jdl)$", "");
+        String command = jdlFile.replaceAll("-[0-9]+\\.jdl$", "");
         List<String> newlyBannedSitesList = getDiracFaultySites(command).getBannedSitesList();
         String keyword = "BannedSite";
         StringBuilder bannedSitesBuilder = new StringBuilder();

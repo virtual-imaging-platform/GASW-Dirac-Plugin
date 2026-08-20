@@ -159,7 +159,7 @@ public class DiracConfiguration {
             balanceEnabled = config.getBoolean(DiracConstants.LAB_BALANCE_ENABLED, false);
             dynamicBanEnabled = config.getBoolean(DiracConstants.LAB_CONF_DYNAMIC_BAN_ENABLED, true);
             bannedSites = config.getList(DiracConstants.LAB_CONF_BANNED_SITES, Arrays.asList());
-            siteNamesToIgnore = config.getList(DiracConstants.LAB_CONF_SITE_NAMES_TO_IGNORE, Arrays.asList("Any", "Multiple"));
+            siteNamesToIgnore = config.getList(DiracConstants.LAB_CONF_SITE_NAMES_TO_IGNORE, Arrays.asList("Any", "ANY", "Multiple"));
             siteNames = config.getList(DiracConstants.LAB_CONF_SITE_NAMES, Arrays.asList());
             tags = config.getList(DiracConstants.LAB_TAGS, Arrays.asList());
             diracosrcPath = config.getString(DiracConstants.LAB_CONF_DIRACOSRC_FILEPATH, "/vip/dirac/diracos/diracosrc");
