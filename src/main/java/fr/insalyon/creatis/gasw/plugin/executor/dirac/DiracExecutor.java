@@ -88,6 +88,11 @@ public class DiracExecutor implements ExecutorPlugin {
     }
 
     @Override
+    public GaswInput getGaswInput() {
+        return diracSubmit.getGaswInput();
+    }
+
+    @Override
     public void terminate(boolean force) throws GaswException {
         try {
             DiracSubmit.terminate(force);

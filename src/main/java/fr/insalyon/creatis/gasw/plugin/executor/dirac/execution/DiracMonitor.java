@@ -506,6 +506,7 @@ public class DiracMonitor extends GaswMonitor {
                 instance.setStop(true);
             }
             instance.join();
+            instance = null;
         }
     }
 }
